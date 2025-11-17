@@ -158,7 +158,7 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
             </label>
             <BFSelect
               value={weekday}
-              onValueChange={setWeekday}
+              onChange={setWeekday}
               options={weekdayOptions}
               placeholder="Selecione o dia"
               data-test="weekday-select"

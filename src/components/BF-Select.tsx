@@ -1,13 +1,21 @@
 /**
  * BF-Select Component
  * 
- * Select customizado com estilo do design system
+ * Select customizado com estilo do design system Bot Fut
+ * Usa shadcn Select para melhor controle de estilo do dropdown
  * - Estados de erro e desabilitado
- * - Ícone customizável
+ * - Dropdown estilizado
+ * - Totalmente acessível
  */
 
-import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 interface BFSelectOption {
   value: string | number;
@@ -37,13 +45,15 @@ export const BFSelect: React.FC<BFSelectProps> = ({
   placeholder = 'Selecione...',
   'data-test': dataTest = 'bf-select',
 }) => {
-  const [focused, setFocused] = useState(false);
+  // Converte valor para string para compatibilidade com Radix Select
+  const stringValue = String(value);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = e.target.value;
-    // Tenta converter para número se o valor original era número
-    const parsedValue = isNaN(Number(newValue)) ? newValue : Number(newValue);
-    onChange(parsedValue);
+  const handleValueChange = (newValue: string) => {
+    // Encontra a opção original para preservar o tipo
+    const option = options.find(opt => String(opt.value) === newValue);
+    if (option) {
+      onChange(option.value);
+    }
   };
 
   return (
@@ -51,57 +61,72 @@ export const BFSelect: React.FC<BFSelectProps> = ({
       {/* Label */}
       {label && (
         <label
-          htmlFor="select-input"
+          htmlFor="select-trigger"
           className="block mb-2 text-sm text-foreground"
         >
           {label}
         </label>
       )}
 
-      {/* Select Container */}
-      <div
-        className={`
-          relative flex items-center px-4 h-12
-          bg-white border-2 rounded-xl transition-all
-          ${focused && !error ? 'border-[var(--bf-blue-primary)] shadow-lg shadow-blue-500/10' : ''}
-          ${error ? 'border-destructive' : 'border-border'}
-          ${disabled ? 'opacity-50 cursor-not-allowed bg-muted' : ''}
-        `}
+      {/* Select usando shadcn/ui */}
+      <Select
+        value={stringValue}
+        onValueChange={handleValueChange}
+        disabled={disabled}
       >
-        {/* Select */}
-        <select
-          id="select-input"
-          value={value}
-          onChange={handleChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          disabled={disabled}
+        <SelectTrigger
+          id="select-trigger"
           className={`
-            flex-1 bg-transparent outline-none appearance-none
-            text-foreground pr-8
-            ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+            h-12 px-4 rounded-xl border-2 transition-all duration-200
+            font-normal text-left
+            ${error 
+              ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20 focus-visible:shadow-lg focus-visible:shadow-red-500/10' 
+              : 'border-border focus-visible:border-[var(--bf-blue-primary)] focus-visible:ring-[var(--bf-blue-primary)]/10 focus-visible:shadow-lg focus-visible:shadow-blue-500/10'
+            }
+            ${disabled 
+              ? 'opacity-50 cursor-not-allowed bg-muted' 
+              : 'bg-white dark:bg-card hover:border-[var(--bf-blue-primary)]/50'
+            }
           `}
-          data-test={`${dataTest}-field`}
+          data-test={`${dataTest}-trigger`}
           aria-invalid={!!error}
           aria-describedby={error ? 'select-error' : undefined}
         >
-          {placeholder && <option value="">{placeholder}</option>}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Ícone */}
-        <ChevronDown
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        
+        <SelectContent
           className={`
-            absolute right-4 w-5 h-5 pointer-events-none transition-colors
-            ${focused && !error ? 'text-[var(--bf-blue-primary)]' : 'text-muted-foreground'}
-            ${error ? 'text-destructive' : ''}
+            bg-white dark:bg-card
+            border-2 border-border 
+            rounded-xl shadow-xl
+            max-h-[300px] overflow-y-auto
+            z-50 p-1
           `}
-        />
-      </div>
+          data-test={`${dataTest}-content`}
+        >
+          {options.map((option) => (
+            <SelectItem
+              key={String(option.value)}
+              value={String(option.value)}
+              className={`
+                px-4 py-3 cursor-pointer 
+                transition-all duration-150
+                hover:bg-accent focus:bg-accent
+                data-[state=checked]:bg-[var(--bf-blue-primary)] 
+                data-[state=checked]:text-white
+                data-[state=checked]:font-medium
+                data-[state=checked]:shadow-sm
+                rounded-lg mx-1 my-0.5
+                outline-none
+              `}
+              data-test={`${dataTest}-option-${option.value}`}
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Mensagem de erro */}
       {error && (
