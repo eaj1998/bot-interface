@@ -66,11 +66,11 @@ export const tokenService = {
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = tokenService.getAccessToken();
-    
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -149,7 +149,7 @@ api.interceptors.response.use(
 
       if (accessToken) {
         tokenService.setTokens(accessToken, refreshToken);
-        
+
         processQueue(null, accessToken);
 
         if (originalRequest.headers) {
@@ -186,16 +186,16 @@ export const authAPI = {
    */
   verifyOTP: async (phone: string, otp: string) => {
     const response = await api.post('/auth/verify-otp', { phone, code: otp });
-    
+
     console.log('Response from API:', response.data);
-    
+
     const responseData = response.data.data || response.data;
     const accessToken = responseData.accessToken || responseData.access_token;
     const refreshToken = responseData.refreshToken || responseData.refresh_token;
     const user = responseData.user;
-    
+
     console.log('Tokens extracted:', { accessToken, refreshToken, user });
-    
+
     if (accessToken && refreshToken) {
       tokenService.setTokens(accessToken, refreshToken);
       if (user) {
@@ -205,7 +205,7 @@ export const authAPI = {
     } else {
       console.error('No tokens received from API');
     }
-    
+
     return responseData;
   },
 
@@ -236,5 +236,88 @@ export const authAPI = {
     return !!tokenService.getAccessToken();
   },
 };
+
+/**
+ * API de Débitos
+ */
+export const debtsAPI = {
+  /**
+   * Busca todos os débitos do usuário autenticado
+   */
+  getMyDebts: async () => {
+    const response = await api.get(`players/${tokenService.getUser()?.id}/debts`);
+    return response.data;
+  },
+
+  /**
+   * Busca débitos por ID do usuário (admin)
+   */
+  getDebtsByUserId: async (userId: string) => {
+    const response = await api.get(`/debts/user/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Busca um débito específico por ID
+   */
+  getDebtById: async (debtId: string) => {
+    const response = await api.get(`/debts/${debtId}`);
+    return response.data;
+  },
+
+  /**
+   * Marca débito como pago
+   */
+  markAsPaid: async (debtId: string, paidAt?: string) => {
+    const response = await api.patch(`/debts/${debtId}/pay`, { paidAt });
+    return response.data;
+  },
+};
+
+
+/**
+ * API de Jogos
+ */
+export const gamesAPI = {
+  /**
+   * Busca todos os jogos abertos do usuário autenticado
+   */
+  getMyOpenGames: async () => {
+    const response = await api.get(`players/${tokenService.getUser()?.id}/games`);
+    return response.data;
+  },
+};
+
+/**
+ * API de Ledgers (Histórico de Transações)
+ */
+export const ledgersAPI = {
+  /**
+   * Busca histórico de transações do usuário com paginação
+   */
+  getMyLedgers: async (page: number = 1, limit: number = 20) => {
+    const response = await api.get(`/players/${tokenService.getUser()?.id}/transactions`, {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+};
+
+/**
+ * API de Players 
+ */
+export const playersAPI = {
+  /**
+   * Atualiza os dados do jogador autenticado
+   */
+  updatePlayer: async (name: string, isGoalkeeper: boolean) => {
+    const response = await api.put(`/players/${tokenService.getUser()?.id}`, {
+      name,
+      isGoalkeeper,
+    });
+    return response.data;
+  },
+};
+
 
 export default api;

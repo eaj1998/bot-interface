@@ -1,31 +1,145 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BFCard, BFCardHeader, BFCardContent } from '../components/BF-Card';
 import { BFBadge } from '../components/BF-Badge';
 import { BFButton } from '../components/BF-Button';
 import { BFIcons } from '../components/BF-Icons';
-import { mockDebts, mockGames, mockTransactions } from '../lib/mockData';
+
 import { useAuth } from '../components/ProtectedRoute';
+import { debtsAPI, gamesAPI, ledgersAPI } from '../lib/axios';
 
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();
-  const userId = '1';
+  const [debts, setDebts] = useState<any[]>([]);
+  const [games, setGames] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactionsPagination, setTransactionsPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    limit: 5
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const userDebts = mockDebts.filter((d) => d.playerId === userId);
-  const pendingDebts = userDebts.filter((d) => d.status === 'pending' || d.status === 'overdue');
-  const totalDebt = pendingDebts.reduce((sum, d) => sum + d.amount, 0);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        const debtsResponse = await debtsAPI.getMyDebts();
+        const debtsData = debtsResponse.data || debtsResponse;
+        const mappedDebts = Array.isArray(debtsData) ? debtsData.map((debt: any) => ({
+          id: debt._id,
+          amount: debt.amountCents / 100,
+          status: debt.status === 'pendente' ? 'pending' : debt.status === 'confirmado' ? 'paid' : 'overdue',
+          gameName: debt.note || 'Jogo',
+          dueDate: debt.createdAt,
+          ...debt
+        })) : [];
+        setDebts(mappedDebts);
+
+        const gamesResponse = await gamesAPI.getMyOpenGames();
+        const gamesData = gamesResponse.data || gamesResponse;
+        const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
+          id: game.id,
+          name: game.title,
+          status: game.status === 'open' ? 'scheduled' : game.status,
+          date: game.date,
+          time: new Date(game.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          location: 'A definir',
+          pricePerPlayer: game.priceCents / 100,
+          currentPlayers: game.currentPlayers ?? 0,
+          maxPlayers: game.maxPlayers ?? 0,
+          paid: game.playerInfo?.paid || false,
+          ...game
+        })) : [];
+        setGames(mappedGames);
+
+        // Busca histórico de transações
+        const ledgersResponse = await ledgersAPI.getMyLedgers(1, 5);
+        const ledgersData = ledgersResponse.ledgers || [];
+        const mappedLedgers = Array.isArray(ledgersData) ? ledgersData.map((ledger: any) => ({
+          id: ledger._id,
+          type: ledger.type === 'credit' ? 'payment' : 'debit',
+          description: ledger.note,
+          amount: ledger.type === 'credit' ? ledger.amountCents / 100 : -(ledger.amountCents / 100),
+          date: ledger.createdAt,
+          status: ledger.status,
+          ...ledger
+        })) : [];
+        setTransactions(mappedLedgers);
+        setTransactionsPagination({
+          page: ledgersResponse.page || 1,
+          totalPages: ledgersResponse.totalPages || 1,
+          total: ledgersResponse.total || 0,
+          limit: ledgersResponse.limit || 5
+        });
+        
+      } catch (error: any) {
+        console.error('Error fetching data:', error);
+        setError('Erro ao carregar dados');
+        setDebts([]);
+        setGames([]);
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const pendingDebts = debts.filter(f => f.type === 'debit');
+  const totalDebt = pendingDebts.filter(f => f.status === 'pendente' && f.type === 'debit').reduce((sum, d) => sum + d.amount, 0);
+
+  const upcomingGames = games;
   
-  const userTransactions = mockTransactions.filter((t) => t.playerId === userId).slice(0, 5);
-  const upcomingGames = mockGames.filter((g) => g.status === 'scheduled').slice(0, 3);
-
+  const loadTransactionsPage = async (page: number) => {
+    try {
+      const response = await ledgersAPI.getMyLedgers(page, 5);
+      const ledgersData = response.ledgers || [];
+      const mappedLedgers = ledgersData.map((ledger: any) => ({
+        id: ledger._id,
+        type: ledger.type === 'credit' ? 'payment' : 'debit',
+        description: ledger.note,
+        amount: ledger.type === 'credit' ? ledger.amountCents / 100 : -(ledger.amountCents / 100),
+        date: ledger.createdAt,
+        status: ledger.status,
+      }));
+      setTransactions(mappedLedgers);
+      setTransactionsPagination({
+        page: response.page,
+        totalPages: response.totalPages,
+        total: response.total,
+        limit: response.limit
+      });
+    } catch (error) {
+      console.error('Error loading transactions page:', error);
+    }
+  };
+  
   const getDebtStatusBadge = (status: string) => {
     const statusMap = {
       pending: { variant: 'warning' as const, label: 'Pendente' },
-      paid: { variant: 'success' as const, label: 'Pago' },
+      pendente: { variant: 'warning' as const, label: 'Pendente' },
+      paid: { variant: 'success' as const, label: 'Confirmado' },
+      confirmado: { variant: 'success' as const, label: 'Confirmado' },
       overdue: { variant: 'error' as const, label: 'Atrasado' },
     };
-    const config = statusMap[status as keyof typeof statusMap];
+    const config = statusMap[status as keyof typeof statusMap] || { variant: 'warning' as const, label: 'Pendente' };
     return <BFBadge variant={config.variant}>{config.label}</BFBadge>;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <p className="mt-2 text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-test="user-dashboard">
@@ -36,6 +150,13 @@ export const UserDashboard: React.FC = () => {
           Acompanhe seus débitos e próximos jogos
         </p>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -75,9 +196,9 @@ export const UserDashboard: React.FC = () => {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[--muted-foreground] mb-1">Status</p>
-              <BFBadge variant="success" size="lg">Ativo</BFBadge>
+              <BFBadge variant={user.status === 'active' ? 'success' : 'error'} size="lg">{user.status === 'active' ? 'Ativo' : 'Inativo'}</BFBadge>
               <p className="text-[--muted-foreground] mt-2">
-                Membro desde Jan/2024
+                Membro desde {new Date(user.createdAt).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })}
               </p>
             </div>
             <div className="bg-[--success]/10 p-3 rounded-lg">
@@ -94,18 +215,18 @@ export const UserDashboard: React.FC = () => {
           <BFCardHeader
             title="Débitos Pendentes"
             subtitle={`${pendingDebts.length} ${pendingDebts.length === 1 ? 'débito' : 'débitos'}`}
-            action={
-              totalDebt > 0 && (
-                <BFButton
-                  variant="primary"
-                  size="sm"
-                  icon={<BFIcons.DollarSign size={16} />}
-                  data-test="pay-all-button"
-                >
-                  Pagar Tudo
-                </BFButton>
-              )
-            }
+          // action={
+          //   totalDebt > 0 && (
+          //     <BFButton
+          //       variant="primary"
+          //       size="sm"
+          //       icon={<BFIcons.DollarSign size={16} />}
+          //       data-test="pay-all-button"
+          //     >
+          //       Pagar Tudo
+          //     </BFButton>
+          //   )
+          // }
           />
           <BFCardContent>
             {pendingDebts.length === 0 ? (
@@ -174,7 +295,7 @@ export const UserDashboard: React.FC = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-[--foreground]">{game.name}</p>
-                        <p className="text-[--muted-foreground]">{game.location}</p>
+                        {/* <p className="text-[--muted-foreground]">{game.location}</p> */}
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -209,51 +330,85 @@ export const UserDashboard: React.FC = () => {
       <BFCard variant="elevated" padding="lg" data-test="transaction-history">
         <BFCardHeader
           title="Histórico de Transações"
-          subtitle="Últimas movimentações"
+          subtitle={`${transactionsPagination.total} movimentações`}
         />
         <BFCardContent>
-          <div className="space-y-3">
-            {userTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-3 border-b border-[--border] last:border-0"
-              >
-                <div className="flex items-center gap-3">
+          {transactions.length === 0 ? (
+            <div className="text-center py-8 text-[--muted-foreground]">
+              <p>Nenhuma transação encontrada</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {transactions.map((transaction) => (
                   <div
-                    className={`p-2 rounded-lg ${
-                      transaction.type === 'payment'
-                        ? 'bg-[--success]/10'
-                        : 'bg-[--warning]/10'
-                    }`}
+                    key={transaction.id}
+                    className="flex items-center justify-between p-3 border-b border-[--border] last:border-0"
                   >
-                    {transaction.type === 'payment' ? (
-                      <BFIcons.TrendingUp size={20} color="var(--success)" />
-                    ) : (
-                      <BFIcons.TrendingDown size={20} color="var(--warning)" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[--foreground]">{transaction.description}</p>
-                    <p className="text-[--muted-foreground]">
-                      {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${transaction.type === 'payment'
+                          ? 'bg-[--success]/10'
+                          : 'bg-[--warning]/10'
+                          }`}
+                      >
+                        {transaction.type === 'payment' ? (
+                          <BFIcons.TrendingUp size={20} color="var(--success)" />
+                        ) : (
+                          <BFIcons.TrendingDown size={20} color="var(--warning)" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[--foreground]">{transaction.description}</p>
+                        <p className="text-[--muted-foreground]">
+                          {new Date(transaction.date).toLocaleDateString('pt-BR')} às {new Date(transaction.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                    <p
+                      className={
+                        transaction.type === 'payment'
+                          ? 'text-[--success]'
+                          : 'text-[--destructive]'
+                      }
+                    >
+                      {transaction.amount > 0 ? '+' : ''}R${' '}
+                      {Math.abs(transaction.amount).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                      })}
                     </p>
                   </div>
-                </div>
-                <p
-                  className={
-                    transaction.type === 'payment'
-                      ? 'text-[--success]'
-                      : 'text-[--destructive]'
-                  }
-                >
-                  {transaction.type === 'payment' ? '+' : ''}R${' '}
-                  {Math.abs(transaction.amount).toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                  })}
-                </p>
+                ))}
               </div>
-            ))}
-          </div>
+              
+              {/* Paginação */}
+              {transactionsPagination.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-[--border]">
+                  <p className="text-sm text-[--muted-foreground]">
+                    Página {transactionsPagination.page} de {transactionsPagination.totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <BFButton
+                      variant="outline"
+                      size="sm"
+                      disabled={transactionsPagination.page === 1}
+                      onClick={() => loadTransactionsPage(transactionsPagination.page - 1)}
+                    >
+                      Anterior
+                    </BFButton>
+                    <BFButton
+                      variant="outline"
+                      size="sm"
+                      disabled={transactionsPagination.page === transactionsPagination.totalPages}
+                      onClick={() => loadTransactionsPage(transactionsPagination.page + 1)}
+                    >
+                      Próxima
+                    </BFButton>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </BFCardContent>
       </BFCard>
     </div>

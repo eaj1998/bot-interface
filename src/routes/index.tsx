@@ -6,6 +6,7 @@
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { RootRedirect } from '../components/RootRedirect';
 
 // Layouts
 import AppLayout from '../layouts/AppLayout';
@@ -125,10 +126,10 @@ export const router = createBrowserRouter([
     element: <DevHandoff />,
   },
 
-  // Rota padrão - redireciona baseado na autenticação
+  // Rota padrão - verifica autenticação antes de redirecionar
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <RootRedirect />,
   },
 
   // 404 - Página não encontrada

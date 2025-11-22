@@ -8,7 +8,7 @@
  * - Responsivo e acessível
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BFPhoneInput } from '../components/BF-PhoneInput';
 import { BFOTPInput } from '../components/BF-OTPInput';
@@ -16,12 +16,14 @@ import { BFButton } from '../components/BF-Button';
 import { BFLogo } from '../components/BF-Logo';
 import { BFAlertMessage } from '../components/BF-AlertMessage';
 import { ArrowLeft, Smartphone } from 'lucide-react';
-import { authAPI } from '../lib/axios';
+import { authAPI, tokenService } from '../lib/axios';
 
 type LoginStep = 'phone' | 'otp';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  
   // Estado do formulário
   const [step, setStep] = useState<LoginStep>('phone');
   const [phone, setPhone] = useState('');
@@ -32,6 +34,32 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [canResend, setCanResend] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(60);
+
+  // Verifica se já está autenticado
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (authAPI.isAuthenticated()) {
+        try {
+          const user = await authAPI.getMe();
+          // Se já está autenticado, redireciona
+          if (user.role === 'admin') {
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            navigate('/user/dashboard', { replace: true });
+          }
+        } catch (error) {
+          // Token inválido, limpa e continua no login
+          console.error('Token validation failed:', error);
+          tokenService.clearTokens();
+          setIsCheckingAuth(false);
+        }
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   // Validação de telefone
   const isPhoneValid = (): boolean => {
@@ -148,6 +176,18 @@ export const Login: React.FC = () => {
     setError('');
     setCanResend(false);
   };
+
+  // Mostra loading enquanto verifica autenticação
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[var(--bf-navy)] via-[var(--bf-navy-light)] to-[var(--bf-blue-primary)] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <p className="mt-2 text-white">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

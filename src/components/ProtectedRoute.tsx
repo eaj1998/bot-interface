@@ -82,10 +82,17 @@ export const useAuth = () => {
     }
   };
 
+  const updateUser = (newUserData: any) => {
+    const updatedUser = { ...user, ...newUserData };
+    tokenService.setUser(updatedUser);
+    setUser(updatedUser);
+  };
+
   return {
     user,
     logout,
     refreshUser,
+    updateUser,
     isAuthenticated: authAPI.isAuthenticated(),
   };
 };

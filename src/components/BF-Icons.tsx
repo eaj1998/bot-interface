@@ -54,6 +54,9 @@ import {
   Hash,
   CreditCard,
   Archive,
+  Lock,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 export const BFIcons = {
@@ -93,6 +96,9 @@ export const BFIcons = {
   AlertCircle,
   Eye,
   EyeOff,
+  Lock,
+  Moon,
+  Sun,
 
   // Data
   Calendar,
