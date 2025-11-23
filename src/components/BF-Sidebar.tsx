@@ -19,6 +19,8 @@ export interface BFSidebarProps {
   userName: string;
   userEmail: string;
   onLogout: () => void;
+  isMobileOpen?: boolean;
+  onMobileToggle?: () => void;
   'data-test'?: string;
 }
 
@@ -30,6 +32,8 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
   userName,
   userEmail,
   onLogout,
+  isMobileOpen = false,
+  onMobileToggle,
   'data-test': dataTest,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -41,7 +45,12 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
   return (
     <>
       {/* Mobile Overlay */}
-      <div className="lg:hidden fixed inset-0 bg-black/50 z-40 hidden" id="sidebar-overlay" />
+      {isMobileOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40" 
+          onClick={onMobileToggle}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
@@ -53,7 +62,8 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
           z-50
           flex flex-col
           ${isCollapsed ? 'w-20' : 'w-64'}
-          lg:sticky lg:z-0
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:sticky lg:z-0
         `}
         data-test={dataTest}
       >
@@ -61,8 +71,14 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
         <div className="h-16 flex items-center justify-between px-4 border-b border-[#1A2B42]">
           {!isCollapsed && <BFLogo size="sm" className="text-white" />}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-md hover:bg-[#1A2B42] transition-colors text-white"
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                onMobileToggle?.();
+              } else {
+                setIsCollapsed(!isCollapsed);
+              }
+            }}
+            className="p-2 rounded-md hover:bg-[#1A2B42] transition-colors text-white cursor-pointer"
             data-test="sidebar-toggle"
           >
             <BFIcons.Menu size={20} />
@@ -79,10 +95,15 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
               return (
                 <li key={item.id}>
                   <button
-                    onClick={() => onItemClick(item.id)}
+                    onClick={() => {
+                      onItemClick(item.id);
+                      if (window.innerWidth < 1024 && isMobileOpen) {
+                        onMobileToggle?.();
+                      }
+                    }}
                     className={`
                       w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                      transition-all duration-200
+                      transition-all duration-200 cursor-pointer
                       ${
                         isActive
                           ? 'bg-[#00D66F] text-white'
@@ -121,7 +142,7 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-white">{userName}</p>
-                  <p className="text-xs text-white/70 truncate">{userEmail}</p>
+                  <p className="text-xs text-white/70 truncate">{userEmail.replace(/^(\d{2})(\d{2})(\d{5})(\d{4})$/, '+$1 ($2) $3-$4')}</p>
                 </div>
               </div>
               <button

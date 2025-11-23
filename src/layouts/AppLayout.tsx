@@ -4,7 +4,7 @@
  * Layout usado para páginas autenticadas com sidebar
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { BFSidebar, BFSidebarItem } from '../components/BF-Sidebar';
 import { BFIcons } from '../components/BF-Icons';
@@ -19,9 +19,18 @@ export default function AppLayout({ role }: AppLayoutProps) {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState('dashboard');
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+
+  // Aplicar tema ao carregar
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const isDark = savedTheme === 'dark';
+    setIsDarkMode(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
@@ -114,6 +123,8 @@ export default function AppLayout({ role }: AppLayoutProps) {
         userRole={role}
         userName={user?.name || 'Usuário'}
         userEmail={user?.phone || ''}
+        isMobileOpen={isMobileMenuOpen}
+        onMobileToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         onLogout={async () => {
           const { authAPI } = await import('../lib/axios');
           await authAPI.logout();
@@ -121,12 +132,21 @@ export default function AppLayout({ role }: AppLayoutProps) {
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-[--card] border-b border-[--border] shadow-sm">
-          <div className="flex items-center justify-between h-16 px-6">
-            {/* Left Side - Title */}
+        <header className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+            {/* Left Side - Mobile Menu + Title */}
             <div className="flex items-center gap-3">
+              {/* Mobile Menu Button */}
+              <button
+                className="lg:hidden p-2 rounded-lg hover:bg-[--accent] transition-colors cursor-pointer"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Abrir Menu"
+              >
+                <BFIcons.Menu size={20} className="text-[--foreground]" />
+              </button>
+              
               <div className="hidden sm:block">
                 <h2 className="text-base font-semibold text-[--foreground]">Bot Fut</h2>
                 <p className="text-xs text-[--muted-foreground] leading-none">
@@ -139,18 +159,18 @@ export default function AppLayout({ role }: AppLayoutProps) {
             <div className="flex items-center gap-2">
               {/* Notifications Button */}
               <button
-                className="relative p-2.5 rounded-lg hover:bg-[--accent] transition-colors group"
+                className="relative p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group cursor-pointer"
                 onClick={() => {}}
                 aria-label="Notificações"
               >
                 <BFIcons.Bell size={20} className="text-[--muted-foreground] group-hover:text-[--foreground]" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[--card]"></span>
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-gray-900"></span>
               </button>
               
               {/* Settings Dropdown */}
               <div className="relative">
                 <button
-                  className="p-2.5 rounded-lg hover:bg-[--accent] transition-colors group"
+                  className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group cursor-pointer"
                   onClick={() => setShowSettingsMenu(!showSettingsMenu)}
                   aria-label="Configurações"
                 >
@@ -164,9 +184,9 @@ export default function AppLayout({ role }: AppLayoutProps) {
                       className="fixed inset-0 z-40" 
                       onClick={() => setShowSettingsMenu(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-[--card] rounded-lg shadow-lg border border-[--border] py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-2 z-50">
                       {/* Theme Toggle */}
-                      <div className="px-4 py-3 hover:bg-[--accent] transition-colors">
+                      <div className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             {isDarkMode ? (
@@ -193,23 +213,18 @@ export default function AppLayout({ role }: AppLayoutProps) {
                         </div>
                       </div>
 
-                      <div className="border-t border-[--border] my-1" />
+                      <div className="border-t border-gray-200 dark:border-gray-800 my-1" />
 
                       {/* Other Settings Options */}
                       <button
-                        className="w-full px-4 py-2.5 text-left hover:bg-[--accent] transition-colors flex items-center gap-3"
-                        onClick={() => setShowSettingsMenu(false)}
+                        className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 cursor-pointer"
+                        onClick={() => {
+                          setShowSettingsMenu(false);
+                          navigate('/user/profile');
+                        }}
                       >
                         <BFIcons.User size={18} className="text-[--muted-foreground]" />
                         <span className="text-sm text-[--foreground]">Meu Perfil</span>
-                      </button>
-
-                      <button
-                        className="w-full px-4 py-2.5 text-left hover:bg-[--accent] transition-colors flex items-center gap-3"
-                        onClick={() => setShowSettingsMenu(false)}
-                      >
-                        <BFIcons.Bell size={18} className="text-[--muted-foreground]" />
-                        <span className="text-sm text-[--foreground]">Notificações</span>
                       </button>
                     </div>
                   </>
@@ -220,7 +235,7 @@ export default function AppLayout({ role }: AppLayoutProps) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-6 md:p-8 bg-[--background]">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 bg-[--background]">
           <div className="max-w-[1600px] mx-auto">
             <Outlet />
           </div>

@@ -139,13 +139,15 @@ export const UserProfile: React.FC = () => {
                   Nome Completo {isEditing && <span className="text-[--destructive]">*</span>}
                 </label>
                 {isEditing ? (
-                  <BFInput
-                    value={formData.name}
-                    onChange={(value) => setFormData({ ...formData, name: value })}
-                    placeholder="Digite seu nome completo"
-                    disabled={loading}
-                    fullWidth
-                  />
+                  <div className="[&_input]:bg-white [&_input]:dark:bg-gray-800 [&_input]:text-gray-900 [&_input]:dark:text-white">
+                    <BFInput
+                      value={formData.name}
+                      onChange={(value) => setFormData({ ...formData, name: value })}
+                      placeholder="Digite seu nome completo"
+                      disabled={loading}
+                      fullWidth
+                    />
+                  </div>
                 ) : (
                   <div className="px-4 py-2.5 bg-[--accent] rounded-lg">
                     <p className="text-[--foreground]">{user?.name || 'Não informado'}</p>

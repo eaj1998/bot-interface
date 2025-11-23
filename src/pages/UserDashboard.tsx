@@ -18,6 +18,22 @@ export const UserDashboard: React.FC = () => {
     total: 0,
     limit: 5
   });
+  const [copiedDebtId, setCopiedDebtId] = useState<string | null>(null);
+
+  const handleCopyPixKey = async (debtId: string, pixKey: string) => {
+    if (!pixKey) {
+      console.error('Chave PIX não disponível');
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(pixKey);
+      setCopiedDebtId(debtId);
+      setTimeout(() => setCopiedDebtId(null), 2000);
+    } catch (error) {
+      console.error('Erro ao copiar chave PIX:', error);
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -55,7 +71,6 @@ export const UserDashboard: React.FC = () => {
         })) : [];
         setGames(mappedGames);
 
-        // Busca histórico de transações
         const ledgersResponse = await ledgersAPI.getMyLedgers(1, 5);
         const ledgersData = ledgersResponse.ledgers || [];
         const mappedLedgers = Array.isArray(ledgersData) ? ledgersData.map((ledger: any) => ({
@@ -142,11 +157,11 @@ export const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6" data-test="user-dashboard">
+    <div className="space-y-4 sm:space-y-6" data-test="user-dashboard">
       {/* Header */}
       <div>
-        <h1 className="text-[--foreground] mb-2">Olá, {user?.name || 'Usuário'}! 👋</h1>
-        <p className="text-[--muted-foreground]">
+        <h1 className="text-xl sm:text-2xl text-[--foreground] mb-2">Olá, {user?.name || 'Usuário'}! 👋</h1>
+        <p className="text-sm sm:text-base text-[--muted-foreground]">
           Acompanhe seus débitos e próximos jogos
         </p>
       </div>
@@ -159,20 +174,20 @@ export const UserDashboard: React.FC = () => {
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <BFCard variant="stat" padding="md" data-test="user-debt">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-white/80 mb-1">Débito Total</p>
-              <h2 className="text-white">
+              <p className="text-sm sm:text-base text-white/80 mb-1">Débito Total</p>
+              <h2 className="text-xl sm:text-2xl text-white">
                 R$ {totalDebt.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </h2>
-              <p className="text-white/70 mt-2">
+              <p className="text-xs sm:text-sm text-white/70 mt-2">
                 {pendingDebts.length} {pendingDebts.length === 1 ? 'pendência' : 'pendências'}
               </p>
             </div>
-            <div className="bg-white/20 p-3 rounded-lg">
-              <BFIcons.DollarSign size={24} color="white" />
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
+              <BFIcons.DollarSign size={20} color="white" className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </BFCard>
@@ -180,14 +195,14 @@ export const UserDashboard: React.FC = () => {
         <BFCard variant="elevated" padding="md" data-test="user-games">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[--muted-foreground] mb-1">Próximos Jogos</p>
-              <h2 className="text-[--foreground]">{upcomingGames.length}</h2>
-              <p className="text-[--muted-foreground] mt-2">
+              <p className="text-sm sm:text-base text-[--muted-foreground] mb-1">Próximos Jogos</p>
+              <h2 className="text-xl sm:text-2xl text-[--foreground]">{upcomingGames.length}</h2>
+              <p className="text-xs sm:text-sm text-[--muted-foreground] mt-2">
                 Agendados
               </p>
             </div>
-            <div className="bg-[--accent] p-3 rounded-lg">
-              <BFIcons.Trophy size={24} color="var(--primary)" />
+            <div className="bg-[--accent] p-2 sm:p-3 rounded-lg">
+              <BFIcons.Trophy size={20} color="var(--primary)" className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </BFCard>
@@ -195,21 +210,21 @@ export const UserDashboard: React.FC = () => {
         <BFCard variant="elevated" padding="md" data-test="user-status">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[--muted-foreground] mb-1">Status</p>
+              <p className="text-sm sm:text-base text-[--muted-foreground] mb-1">Status</p>
               <BFBadge variant={user.status === 'active' ? 'success' : 'error'} size="lg">{user.status === 'active' ? 'Ativo' : 'Inativo'}</BFBadge>
-              <p className="text-[--muted-foreground] mt-2">
+              <p className="text-xs sm:text-sm text-[--muted-foreground] mt-2">
                 Membro desde {new Date(user.createdAt).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })}
               </p>
             </div>
-            <div className="bg-[--success]/10 p-3 rounded-lg">
-              <BFIcons.CheckCircle size={24} color="var(--success)" />
+            <div className="bg-[--success]/10 p-2 sm:p-3 rounded-lg">
+              <BFIcons.CheckCircle size={20} color="var(--success)" className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </BFCard>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
         {/* Pending Debts */}
         <BFCard variant="elevated" padding="lg" data-test="pending-debts">
           <BFCardHeader
@@ -239,28 +254,33 @@ export const UserDashboard: React.FC = () => {
                 {pendingDebts.map((debt) => (
                   <div
                     key={debt.id}
-                    className="p-4 bg-[--accent] rounded-lg border border-[--border]"
+                    className="p-3 sm:p-4 bg-[--accent] rounded-lg border border-[--border]"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-[--foreground]">{debt.gameName}</p>
-                        <p className="text-[--muted-foreground]">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <p className="text-sm sm:text-base text-[--foreground] font-medium">{debt.gameName}</p>
+                        <p className="text-xs sm:text-sm text-[--muted-foreground] mt-1">
                           Vencimento: {new Date(debt.dueDate).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      {getDebtStatusBadge(debt.status)}
+                      <div className="self-start">
+                        {getDebtStatusBadge(debt.status)}
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-[--border]">
-                      <h4 className="text-[--foreground]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 pt-3 border-t border-[--border]">
+                      <h4 className="text-lg sm:text-xl text-[--foreground] font-semibold">
                         R$ {debt.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </h4>
                       <BFButton
-                        variant="primary"
+                        variant={copiedDebtId === debt.id ? 'success' : 'primary'}
                         size="sm"
-                        icon={<BFIcons.CheckCircle size={16} />}
+                        icon={copiedDebtId === debt.id ? <BFIcons.CheckCircle size={16} /> : <BFIcons.Copy size={16} />}
+                        onClick={() => handleCopyPixKey(debt.id, debt.pix)}
                         data-test={`pay-debt-${debt.id}`}
+                        disabled={!debt.pix}
+                        className="w-full sm:w-auto"
                       >
-                        Pagar
+                        {copiedDebtId === debt.id ? 'Copiado!' : 'Copiar PIX'}
                       </BFButton>
                     </div>
                   </div>
@@ -287,35 +307,27 @@ export const UserDashboard: React.FC = () => {
                 {upcomingGames.map((game) => (
                   <div
                     key={game.id}
-                    className="p-4 bg-[--accent] rounded-lg border border-[--border]"
+                    className="p-3 sm:p-4 bg-[--accent] rounded-lg border border-[--border]"
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="bg-[--primary]/10 p-2 rounded-lg">
-                        <BFIcons.Trophy size={20} color="var(--primary)" />
+                      <div className="bg-[--primary]/10 p-2 rounded-lg flex-shrink-0">
+                        <BFIcons.Trophy size={20} color="var(--primary)" className="sm:w-6 sm:h-6" />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-[--foreground]">{game.name}</p>
-                        {/* <p className="text-[--muted-foreground]">{game.location}</p> */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm sm:text-base text-[--foreground] font-medium truncate">{game.name}</h4>
+                        <p className="text-xs sm:text-sm text-[--muted-foreground]">
+                          {new Date(game.date).toLocaleDateString('pt-BR')} às {game.time}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                       <div>
-                        <p className="text-[--muted-foreground]">
-                          <BFIcons.Calendar size={16} className="inline mr-1" />
-                          {new Date(game.date).toLocaleDateString('pt-BR')}
-                        </p>
-                        <p className="text-[--muted-foreground]">
-                          <BFIcons.Clock size={16} className="inline mr-1" />
-                          {game.time}
-                        </p>
+                        <p className="text-[--muted-foreground]">Valor</p>
+                        <p className="text-[--foreground] font-medium">R$ {game.pricePerPlayer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[--foreground]">
-                          R$ {game.pricePerPlayer.toFixed(2)}
-                        </p>
-                        <p className="text-[--muted-foreground]">
-                          {game.currentPlayers}/{game.maxPlayers} jogadores
-                        </p>
+                      <div>
+                        <p className="text-[--muted-foreground]">Jogadores</p>
+                        <p className="text-[--foreground] font-medium">{game.currentPlayers}/{game.maxPlayers}</p>
                       </div>
                     </div>
                   </div>
@@ -343,34 +355,34 @@ export const UserDashboard: React.FC = () => {
                 {transactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 border-b border-[--border] last:border-0"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-[--accent] rounded-lg border border-[--border]"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start sm:items-center gap-3">
                       <div
-                        className={`p-2 rounded-lg ${transaction.type === 'payment'
+                        className={`p-2 rounded-lg flex-shrink-0 ${transaction.type === 'payment'
                           ? 'bg-[--success]/10'
                           : 'bg-[--warning]/10'
                           }`}
                       >
                         {transaction.type === 'payment' ? (
-                          <BFIcons.TrendingUp size={20} color="var(--success)" />
+                          <BFIcons.TrendingUp size={18} color="var(--success)" className="sm:w-5 sm:h-5" />
                         ) : (
-                          <BFIcons.TrendingDown size={20} color="var(--warning)" />
+                          <BFIcons.TrendingDown size={18} color="var(--warning)" className="sm:w-5 sm:h-5" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-[--foreground]">{transaction.description}</p>
-                        <p className="text-[--muted-foreground]">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm sm:text-base text-[--foreground] font-medium">{transaction.description}</p>
+                        <p className="text-xs sm:text-sm text-[--muted-foreground]">
                           {new Date(transaction.date).toLocaleDateString('pt-BR')} às {new Date(transaction.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
                     <p
-                      className={
+                      className={`text-base sm:text-lg font-semibold text-right sm:text-left ${
                         transaction.type === 'payment'
                           ? 'text-[--success]'
                           : 'text-[--destructive]'
-                      }
+                      }`}
                     >
                       {transaction.amount > 0 ? '+' : ''}R${' '}
                       {Math.abs(transaction.amount).toLocaleString('pt-BR', {
@@ -383,8 +395,8 @@ export const UserDashboard: React.FC = () => {
               
               {/* Paginação */}
               {transactionsPagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-[--border]">
-                  <p className="text-sm text-[--muted-foreground]">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-[--border]">
+                  <p className="text-xs sm:text-sm text-[--muted-foreground]">
                     Página {transactionsPagination.page} de {transactionsPagination.totalPages}
                   </p>
                   <div className="flex gap-2">
