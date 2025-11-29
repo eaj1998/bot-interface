@@ -261,6 +261,26 @@ export const debtsAPI = {
     const response = await api.post(`/debts/${debtId}/pay`, { paidAt });
     return response.data;
   },
+
+  /**
+   * Lista todos os debitos
+   */
+  getAllDebts: async (page: number = 1, limit: number = 10, status?: string, search?: string, sort?: string) => {
+    const params: any = { page, limit };
+    if (status && status !== 'all') params.status = status;
+    if (search) params.search = search;
+    if (sort) params.sort = sort;
+    const response = await api.get('/debts', { params });
+    return response.data;
+  },
+
+  /**
+   * Cria um novo débito
+   */
+  createDebt: async (data: any) => {
+    const response = await api.post('/debts', data);
+    return response.data;
+  },
 };
 
 

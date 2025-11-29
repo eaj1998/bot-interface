@@ -1,36 +1,150 @@
-import React, { useState } from 'react';
-import { BFCard } from '../components/BF-Card';
+import React, { useEffect, useState } from 'react';
 import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
 import { BFBadge } from '../components/BF-Badge';
-import { BFTable } from '../components/BF-Table';
 import { BFIcons } from '../components/BF-Icons';
-import { mockDebts } from '../lib/mockData';
+import { BFListView } from '../components/BFListView';
 import type { Debt } from '../lib/types';
+import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { debtsAPI } from '@/lib/axios';
+import { toast } from 'sonner';
+
+interface DebtAPIResponse {
+  id: string;
+  playerId: string;
+  playerName: string;
+  gameId: string;
+  gameName: string;
+  workspaceId: string;
+  amount: number;
+  amountCents: number;
+  status: string;
+  notes: string;
+  category: string;
+  createdAt: string;
+  paidAt: string;
+  updatedAt: string;
+}
 
 export const ManageDebts: React.FC = () => {
-  const [debts, setDebts] = useState<Debt[]>(mockDebts);
+  const [debts, setDebts] = useState<Debt[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [payingDebt, setPayingDebt] = useState(false);
 
-  const filteredDebts = debts.filter((debt) => {
-    const matchesSearch =
-      debt.playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      debt.gameName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || debt.status === filterStatus;
-    return matchesSearch && matchesStatus;
+  const [stats, setStats] = useState({
+    overdue: 0,
+    debtsMonth: 0,
+    pendingAmount: 0,
+    paidAmount: 0,
   });
 
-  const totalPending = debts
-    .filter((d) => d.status === 'pending' || d.status === 'overdue')
-    .reduce((sum, d) => sum + d.amount, 0);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+  });
 
-  const totalPaid = debts
-    .filter((d) => d.status === 'paid')
-    .reduce((sum, d) => sum + d.amount, 0);
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchDebts();
+  }, [pagination.page, filterStatus, debouncedSearchTerm]);
+
+  const mapStatusFromAPI = (apiStatus: string): Debt['status'] => {
+    const statusMap: Record<string, Debt['status']> = {
+      'confirmado': 'paid',
+      'pendente': 'pending',
+      'cancelado': 'cancelled',
+    };
+    return statusMap[apiStatus] || 'pending';
+  };
+
+  const mapStatusToAPI = (frontendStatus: string): string | undefined => {
+    if (frontendStatus === 'all') return undefined;
+    const statusMap: Record<string, string> = {
+      'paid': 'confirmado',
+      'pending': 'pendente',
+      'cancelled': 'cancelado',
+      'overdue': 'pendente', // Overdue is still pending in the API
+    };
+    return statusMap[frontendStatus];
+  };
+
+  const fetchDebts = async () => {
+    try {
+      setLoading(true);
+      const apiStatus = mapStatusToAPI(filterStatus);
+      const response = await debtsAPI.getAllDebts(
+        pagination.page,
+        pagination.limit,
+        apiStatus,
+        debouncedSearchTerm || undefined
+      );
+
+      // Map API response to frontend Debt type
+      const mappedDebts: Debt[] = response.debts.map((debt: DebtAPIResponse) => ({
+        id: debt.id,
+        playerId: debt.playerId,
+        playerName: debt.playerName || 'Desconhecido',
+        gameId: debt.gameId,
+        gameName: debt.gameName,
+        amount: debt.amountCents / 100, // Convert cents to reais
+        dueDate: debt.paidAt, // Using paidAt as dueDate for now
+        status: mapStatusFromAPI(debt.status),
+        createdAt: debt.createdAt,
+        paidAt: debt.paidAt,
+        notes: debt.notes,
+      }));
+
+      setDebts(mappedDebts);
+      setStats({
+        overdue: response.overdue || 0,
+        debtsMonth: response.debtsMonth || 0,
+        pendingAmount: response.pendingAmount || 0,
+        paidAmount: response.paidAmount || 0,
+      });
+      setPagination(prev => ({
+        ...prev,
+        total: response.total,
+        totalPages: response.totalPages
+      }));
+    } catch (error) {
+      console.error('Error fetching debts:', error);
+      toast.error('Erro ao carregar débitos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayDebt = async () => {
+    if (!selectedDebt) return;
+
+    try {
+      setPayingDebt(true);
+      await debtsAPI.markAsPaid(selectedDebt.id);
+      toast.success('💰 Pagamento registrado com sucesso!');
+      setSelectedDebt(null);
+      setPaymentNotes('');
+      fetchDebts(); // Refresh the list
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao registrar pagamento');
+    } finally {
+      setPayingDebt(false);
+    }
+  };
 
   const getStatusBadge = (status: Debt['status']) => {
     const statusMap = {
@@ -43,15 +157,46 @@ export const ManageDebts: React.FC = () => {
     return <BFBadge variant={config.variant}>{config.label}</BFBadge>;
   };
 
-  const columns = [
+  // Configure statistics for BFListView
+  const listStats: BFListViewStat[] = [
+    {
+      label: 'Pendente',
+      value: `R$ ${stats.pendingAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      icon: <BFIcons.AlertCircle size={20} color="var(--warning)" />,
+      iconBgColor: 'var(--warning)/10',
+      valueColor: 'var(--warning)',
+    },
+    {
+      label: 'Recebido',
+      value: `R$ ${stats.paidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      icon: <BFIcons.CheckCircle size={20} color="var(--success)" />,
+      iconBgColor: 'var(--success)/10',
+      valueColor: 'var(--success)',
+    },
+    {
+      label: 'Atrasados',
+      value: stats.overdue,
+      icon: <BFIcons.Clock size={20} color="var(--destructive)" />,
+      iconBgColor: 'var(--destructive)/10',
+    },
+    {
+      label: 'Este Mês',
+      value: stats.debtsMonth,
+      icon: <BFIcons.Activity size={20} color="var(--info)" />,
+      iconBgColor: 'var(--info)/10',
+    },
+  ];
+
+  // Configure columns for BFListView
+  const columns: BFListViewColumn<Debt>[] = [
     {
       key: 'playerName',
       label: 'Jogador',
       sortable: true,
       render: (value: string) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[--primary]/10 flex items-center justify-center">
-            <span className="text-[--primary]">{value.charAt(0)}</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+            <span className="text-white font-semibold">{value.charAt(0).toUpperCase()}</span>
           </div>
           <span className="text-[--foreground]">{value}</span>
         </div>
@@ -73,17 +218,14 @@ export const ManageDebts: React.FC = () => {
       ),
     },
     {
-      key: 'dueDate',
-      label: 'Vencimento',
+      key: 'createdAt',
+      label: 'Data',
       sortable: true,
-      render: (value: string, row: Debt) => {
-        const isOverdue = new Date(value) < new Date() && row.status !== 'paid';
-        return (
-          <span className={isOverdue ? 'text-[--destructive]' : 'text-[--muted-foreground]'}>
-            {new Date(value).toLocaleDateString('pt-BR')}
-          </span>
-        );
-      },
+      render: (value: string) => (
+        <span className="text-[--muted-foreground]">
+          {new Date(value).toLocaleDateString('pt-BR')}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -93,155 +235,77 @@ export const ManageDebts: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6" data-test="manage-debts">
-      {/* Header */}
-      <div>
-        <h1 className="text-[--foreground] mb-2">Gerenciar Débitos</h1>
-        <p className="text-[--muted-foreground]">
-          Acompanhe e gerencie os débitos dos jogadores
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--warning]/10 p-2 rounded-lg">
-              <BFIcons.AlertCircle size={20} color="var(--warning)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Pendente</p>
-              <h3 className="text-[--warning]">
-                R$ {totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--success]/10 p-2 rounded-lg">
-              <BFIcons.CheckCircle size={20} color="var(--success)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Recebido</p>
-              <h3 className="text-[--success]">
-                R$ {totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--destructive]/10 p-2 rounded-lg">
-              <BFIcons.Clock size={20} color="var(--destructive)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Atrasados</p>
-              <h3 className="text-[--foreground]">
-                {debts.filter((d) => d.status === 'overdue').length}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--info]/10 p-2 rounded-lg">
-              <BFIcons.Activity size={20} color="var(--info)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Este Mês</p>
-              <h3 className="text-[--foreground]">
-                {debts.filter((d) => {
-                  const month = new Date(d.createdAt).getMonth();
-                  return month === new Date().getMonth();
-                }).length}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-      </div>
-
-      {/* Filters */}
-      <BFCard variant="elevated" padding="lg">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <BFInput
-              placeholder="Buscar por jogador ou jogo..."
-              value={searchTerm}
-              onChange={(value) => setSearchTerm(value)}
-              icon={<BFIcons.Search size={20} />}
-              fullWidth
-              data-test="search-debts"
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger data-test="filter-status">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="overdue">Atrasado</SelectItem>
-                <SelectItem value="paid">Pago</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <BFButton
-            variant="outline"
-            icon={<BFIcons.Mail size={20} />}
-            data-test="send-reminders"
-          >
-            Enviar Lembretes
-          </BFButton>
-        </div>
-      </BFCard>
-
-      {/* Table */}
-      <BFCard variant="elevated" padding="none">
-        <BFTable
-          columns={columns}
-          data={filteredDebts}
-          onRowClick={(debt) => setSelectedDebt(debt)}
-          actions={(row: Debt) => (
-            <div className="flex items-center gap-2">
-              {(row.status === 'pending' || row.status === 'overdue') && (
-                <button
-                  className="p-2 hover:bg-[--accent] rounded-md transition-colors"
-                  title="Registrar Pagamento"
-                  data-test={`pay-debt-${row.id}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedDebt(row);
-                  }}
-                >
-                  <BFIcons.CheckCircle size={18} color="var(--success)" />
-                </button>
-              )}
+    <>
+      <BFListView
+        title="Gerenciar Débitos"
+        description="Acompanhe e gerencie os débitos dos jogadores"
+        stats={listStats}
+        searchPlaceholder="Buscar por jogador ou jogo..."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={{
+          value: filterStatus,
+          onChange: setFilterStatus,
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'pending', label: 'Pendente' },
+            { value: 'paid', label: 'Pago' },
+            { value: 'cancelled', label: 'Cancelado' },
+          ],
+        }}
+        columns={columns}
+        data={debts}
+        loading={loading}
+        onRowClick={(debt) => setSelectedDebt(debt)}
+        rowActions={(row: Debt) => (
+          <div className="flex items-center gap-2">
+            {row.status === 'pending' && (
               <button
-                className="p-2 hover:bg-[--accent] rounded-md transition-colors"
-                title="Ver Detalhes"
-                data-test={`view-debt-${row.id}`}
+                className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+                title="Registrar Pagamento"
+                data-test={`pay-debt-${row.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedDebt(row);
+                }}
               >
-                <BFIcons.Eye size={18} color="var(--primary)" />
+                <BFIcons.CheckCircle size={18} color="var(--success)" />
               </button>
-            </div>
-          )}
-          data-test="debts-table"
-        />
-      </BFCard>
+            )}
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Ver Detalhes"
+              data-test={`view-debt-${row.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedDebt(row);
+              }}
+            >
+              <BFIcons.Eye size={18} color="var(--primary)" />
+            </button>
+          </div>
+        )}
+        pagination={{
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+        }}
+        dataTest="manage-debts"
+      />
 
       {/* Payment Dialog */}
       <Dialog open={!!selectedDebt} onOpenChange={() => setSelectedDebt(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar Pagamento</DialogTitle>
+            <DialogTitle>
+              {selectedDebt?.status === 'paid' ? 'Detalhes do Débito' : 'Registrar Pagamento'}
+            </DialogTitle>
             <DialogDescription>
-              Confirme o pagamento do débito selecionado
+              {selectedDebt?.status === 'paid'
+                ? 'Informações do débito pago'
+                : 'Confirme o pagamento do débito selecionado'}
             </DialogDescription>
           </DialogHeader>
           {selectedDebt && (
@@ -260,33 +324,66 @@ export const ManageDebts: React.FC = () => {
                   R$ {selectedDebt.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </h3>
               </div>
-              <BFInput
-                label="Observações (opcional)"
-                placeholder="Adicione uma observação..."
-                fullWidth
-              />
-              <div className="flex justify-end gap-3 pt-4">
-                <BFButton variant="ghost" onClick={() => setSelectedDebt(null)}>
-                  Cancelar
-                </BFButton>
-                <BFButton
-                  variant="success"
-                  icon={<BFIcons.CheckCircle size={20} />}
-                  onClick={() => {
-                    setDebts(debts.map((d) =>
-                      d.id === selectedDebt.id ? { ...d, status: 'paid' as const, paidAt: new Date().toISOString() } : d
-                    ));
-                    setSelectedDebt(null);
-                  }}
-                  data-test="confirm-payment"
-                >
-                  Confirmar Pagamento
-                </BFButton>
-              </div>
+              {selectedDebt.notes && (
+                <div>
+                  <p className="text-[--muted-foreground]">Observações</p>
+                  <p className="text-[--foreground]">{selectedDebt.notes}</p>
+                </div>
+              )}
+              {selectedDebt.status === 'paid' && selectedDebt.paidAt && (
+                <div>
+                  <p className="text-[--muted-foreground]">Data do Pagamento</p>
+                  <p className="text-[--foreground]">
+                    {new Date(selectedDebt.paidAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              )}
+              {selectedDebt.status === 'pending' && (
+                <>
+                  <BFInput
+                    label="Observações (opcional)"
+                    placeholder="Adicione uma observação..."
+                    value={paymentNotes}
+                    onChange={(value) => setPaymentNotes(value)}
+                    fullWidth
+                  />
+                  <div className="flex justify-end gap-3 pt-4">
+                    <BFButton
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedDebt(null);
+                        setPaymentNotes('');
+                      }}
+                      disabled={payingDebt}
+                    >
+                      Cancelar
+                    </BFButton>
+                    <BFButton
+                      variant="success"
+                      icon={<BFIcons.CheckCircle size={20} />}
+                      onClick={handlePayDebt}
+                      disabled={payingDebt}
+                      data-test="confirm-payment"
+                    >
+                      {payingDebt ? 'Processando...' : 'Confirmar Pagamento'}
+                    </BFButton>
+                  </div>
+                </>
+              )}
+              {selectedDebt.status !== 'pending' && (
+                <div className="flex justify-end pt-4">
+                  <BFButton
+                    variant="ghost"
+                    onClick={() => setSelectedDebt(null)}
+                  >
+                    Fechar
+                  </BFButton>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };

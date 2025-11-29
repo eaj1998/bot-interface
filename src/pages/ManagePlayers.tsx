@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BFCard } from '../components/BF-Card';
 import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
 import { BFBadge } from '../components/BF-Badge';
-import { BFTable } from '../components/BF-Table';
 import { BFIcons } from '../components/BF-Icons';
-import { BFPagination } from '../components/BF-Pagination';
+import { BFListView } from '../components/BFListView';
+import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { EditPlayerModal } from '../components/EditPlayerModal';
 import { playersAPI } from '../lib/axios';
 import type { Player } from '../lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
@@ -144,7 +143,39 @@ export const ManagePlayers: React.FC = () => {
     return <BFBadge variant={config.variant}>{config.label}</BFBadge>;
   };
 
-  const columns = [
+  // Configure statistics for BFListView
+  const listStats: BFListViewStat[] = [
+    {
+      label: 'Total',
+      value: stats.total,
+      icon: <BFIcons.Users size={20} color="white" />,
+      iconBgColor: 'white/20',
+      variant: 'stat',
+      labelColor: 'white/80',
+      valueColor: 'white',
+    },
+    {
+      label: 'Ativos',
+      value: stats.active,
+      icon: <BFIcons.CheckCircle size={20} color="var(--success)" />,
+      iconBgColor: 'var(--success)/10',
+    },
+    {
+      label: 'Com Débitos',
+      value: stats.withDebts,
+      icon: <BFIcons.AlertCircle size={20} color="var(--warning)" />,
+      iconBgColor: 'var(--warning)/10',
+    },
+    {
+      label: 'Inativos',
+      value: stats.suspended,
+      icon: <BFIcons.XCircle size={20} color="var(--destructive)" />,
+      iconBgColor: 'var(--destructive)/10',
+    },
+  ];
+
+  // Configure columns for BFListView
+  const columns: BFListViewColumn<Player>[] = [
     {
       key: 'name',
       label: 'Jogador',
@@ -207,192 +238,95 @@ export const ManagePlayers: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6" data-test="manage-players">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-[--foreground] mb-2">Gerenciar Jogadores</h1>
-          <p className="text-[--muted-foreground]">
-            Adicione e gerencie jogadores do sistema
-          </p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <BFButton
-              variant="primary"
-              icon={<BFIcons.Plus size={20} />}
-              data-test="create-player-button"
+    <>
+      <BFListView
+        title="Gerenciar Jogadores"
+        description="Adicione e gerencie jogadores do sistema"
+        createButton={{
+          label: 'Novo Jogador',
+          onClick: () => setIsCreateDialogOpen(true),
+        }}
+        stats={listStats}
+        searchPlaceholder="Buscar por nome ou telefone..."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={{
+          value: filterStatus,
+          onChange: setFilterStatus,
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'active', label: 'Ativos' },
+            { value: 'inactive', label: 'Inativos' },
+          ],
+        }}
+        columns={columns}
+        data={players}
+        loading={loading}
+        emptyState={{
+          icon: <BFIcons.Users size={48} className="text-muted-foreground mb-3" />,
+          message: 'Nenhum jogador encontrado',
+          submessage: (debouncedSearchTerm || filterStatus !== 'all') ? 'Tente ajustar os filtros de busca' : undefined,
+        }}
+        onRowClick={(player) => navigate(`/admin/players/${player.id}`)}
+        rowActions={(row: Player) => (
+          <div className="flex items-center gap-2">
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Ver Detalhes"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/admin/players/${row.id}`);
+              }}
+              data-test={`view-player-${row.id}`}
             >
-              Novo Jogador
-            </BFButton>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Adicionar Novo Jogador</DialogTitle>
-              <DialogDescription>
-                Preencha as informações do jogador abaixo
-              </DialogDescription>
-            </DialogHeader>
-            <CreatePlayerForm onClose={() => setIsCreateDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <BFCard variant="stat" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
-              <BFIcons.Users size={20} color="white" />
-            </div>
-            <div>
-              <p className="text-white/80">Total</p>
-              <h3 className="text-white">{stats.total}</h3>
-            </div>
+              <BFIcons.Eye size={18} color="var(--primary)" />
+            </button>
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Editar"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPlayerToEdit(row);
+              }}
+              data-test={`edit-player-${row.id}`}
+            >
+              <BFIcons.Edit size={18} color="var(--primary)" />
+            </button>
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Deletar"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPlayerToDelete(row);
+              }}
+              data-test={`delete-player-${row.id}`}
+            >
+              <BFIcons.Trash2 size={18} color="var(--destructive)" />
+            </button>
           </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--success]/10 p-2 rounded-lg">
-              <BFIcons.CheckCircle size={20} color="var(--success)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Ativos</p>
-              <h3 className="text-[--foreground]">{stats.active}</h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--warning]/10 p-2 rounded-lg">
-              <BFIcons.AlertCircle size={20} color="var(--warning)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Com Débitos</p>
-              <h3 className="text-[--foreground]">{stats.withDebts}</h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="outlined" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--destructive]/10 p-2 rounded-lg">
-              <BFIcons.XCircle size={20} color="var(--destructive)" />
-            </div>
-            <div>
-              <p className="text-[--muted-foreground]">Inativos</p>
-              <h3 className="text-[--foreground]">{stats.suspended}</h3>
-            </div>
-          </div>
-        </BFCard>
-      </div>
-
-      {/* Filters */}
-      <BFCard variant="elevated" padding="lg">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <BFInput
-              placeholder="Buscar por nome ou telefone..."
-              value={searchTerm}
-              onChange={(value) => setSearchTerm(value)}
-              icon={<BFIcons.Search size={20} />}
-              fullWidth
-              data-test="search-players"
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger data-test="filter-status">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="inactive">Inativos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </BFCard>
-
-      {/* Table */}
-      <BFCard variant="elevated" padding="none">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-              <p className="mt-2 text-muted-foreground">Carregando jogadores...</p>
-            </div>
-          </div>
-        ) : players.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <BFIcons.Users size={48} className="text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Nenhum jogador encontrado</p>
-            {(debouncedSearchTerm || filterStatus !== 'all') && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Tente ajustar os filtros de busca
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            <BFTable
-              columns={columns}
-              data={players}
-              onRowClick={(player) => navigate(`/admin/players/${player.id}`)}
-              actions={(row: Player) => (
-                <div className="flex items-center gap-2">
-                  <button
-                    className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
-                    title="Ver Detalhes"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/admin/players/${row.id}`);
-                    }}
-                    data-test={`view-player-${row.id}`}
-                  >
-                    <BFIcons.Eye size={18} color="var(--primary)" />
-                  </button>
-                  <button
-                    className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
-                    title="Editar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPlayerToEdit(row);
-                    }}
-                    data-test={`edit-player-${row.id}`}
-                  >
-                    <BFIcons.Edit size={18} color="var(--primary)" />
-                  </button>
-                  <button
-                    className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
-                    title="Deletar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPlayerToDelete(row);
-                    }}
-                    data-test={`delete-player-${row.id}`}
-                  >
-                    <BFIcons.Trash2 size={18} color="var(--destructive)" />
-                  </button>
-                </div>
-              )}
-              data-test="players-table"
-            />
-
-            <BFPagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              totalItems={pagination.total}
-              itemsPerPage={pagination.limit}
-              onPageChange={handlePageChange}
-              data-test="players-pagination"
-            />
-          </>
         )}
-      </BFCard>
+        pagination={{
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: handlePageChange,
+        }}
+        dataTest="manage-players"
+      />
+
+      {/* Create Player Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Jogador</DialogTitle>
+            <DialogDescription>
+              Preencha as informações do jogador abaixo
+            </DialogDescription>
+          </DialogHeader>
+          <CreatePlayerForm onClose={() => setIsCreateDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!playerToDelete} onOpenChange={() => setPlayerToDelete(null)}>
@@ -423,7 +357,7 @@ export const ManagePlayers: React.FC = () => {
         onClose={() => setPlayerToEdit(null)}
         onSave={handleSavePlayer}
       />
-    </div>
+    </>
   );
 };
 

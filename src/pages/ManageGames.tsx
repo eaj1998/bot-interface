@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BFCard } from '../components/BF-Card';
 import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
 import { BFSelect } from '../components/BF-Select';
 import { BFDateInput } from '../components/BF-DateInput';
 import { BFMoneyInput } from '../components/BF-MoneyInput';
 import { BFBadge } from '../components/BF-Badge';
-import { BFTable } from '../components/BF-Table';
 import { BFIcons } from '../components/BF-Icons';
-import { BFPagination } from '../components/BF-Pagination';
+import { BFListView } from '../components/BFListView';
+import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { gamesAPI, chatsAPI, workspacesAPI } from '../lib/axios';
 import type { Game } from '../lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../components/ui/dialog';
@@ -78,12 +77,12 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
       setLoading(true);
       const apiStatus = mapStatusToAPI(filterStatus);
       const response = await gamesAPI.getAllGames(
-        pagination.page, 
+        pagination.page,
         pagination.limit,
         apiStatus,
         debouncedSearchTerm || undefined
       );
-      
+
       const mappedGames = response.data.map((game: any) => ({
         id: game.id,
         name: game.name,
@@ -93,11 +92,11 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
         time: game.time,
         maxPlayers: game.maxPlayers,
         currentPlayers: game.currentPlayers,
-        pricePerPlayer: game.pricePerPlayer / 100, 
+        pricePerPlayer: game.pricePerPlayer / 100,
         status: mapStatus(game.status),
         createdAt: game.createdAt,
       }));
-      
+
       setGames(mappedGames);
       setPagination(prev => ({
         ...prev,
@@ -186,15 +185,53 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
     return <BFBadge variant="neutral">{typeMap[type]}</BFBadge>;
   };
 
-  const columns = [
+  // Configure statistics for BFListView
+  const listStats: BFListViewStat[] = [
+    {
+      label: 'Agendados',
+      value: stats.open || 0,
+      icon: <BFIcons.Calendar size={20} color="var(--info)" />,
+      iconBgColor: 'var(--info)/10',
+      variant: 'elevated',
+    },
+    {
+      label: 'Concluídos',
+      value: stats.finished || 0,
+      icon: <BFIcons.CheckCircle size={20} color="var(--success)" />,
+      iconBgColor: 'var(--success)/10',
+      variant: 'elevated',
+    },
+    {
+      label: 'Cancelados',
+      value: stats.cancelled || 0,
+      icon: <BFIcons.XCircle size={20} color="var(--destructive)" />,
+      iconBgColor: 'var(--destructive)/10',
+      variant: 'elevated',
+    },
+    {
+      label: 'Total Jogadores',
+      value: stats.activePlayers || 0,
+      icon: <BFIcons.Users size={20} color="var(--primary)" />,
+      iconBgColor: 'var(--primary)/10',
+      variant: 'elevated',
+    },
+  ];
+
+  // Configure columns for BFListView
+  const columns: BFListViewColumn<Game>[] = [
     {
       key: 'name',
       label: 'Nome',
       sortable: true,
       render: (_: any, row: Game) => (
-        <div>
-          <p className="text-[--foreground]">{row.name}</p>
-          <p className="text-[--muted-foreground]">{row.location}</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[--primary]/10 flex items-center justify-center">
+            <BFIcons.Calendar size={20} color="var(--primary)" />
+          </div>
+          <div>
+            <p className="text-[--foreground] font-medium">{row.name}</p>
+            <p className="text-[--muted-foreground] text-sm">{row.location}</p>
+          </div>
         </div>
       ),
     },
@@ -250,203 +287,100 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
   ];
 
   return (
-    <div className="space-y-6" data-test="manage-games">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-[--foreground] mb-2">Gerenciar Jogos</h1>
-          <p className="text-[--muted-foreground]">
-            Crie e gerencie jogos e eventos esportivos
-          </p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <BFButton
-              variant="primary"
-              icon={<BFIcons.Plus size={20} />}
-              data-test="create-game-button"
-            >
-              Novo Jogo
-            </BFButton>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Criar Novo Jogo</DialogTitle>
-              <DialogDescription>
-                Preencha as informações abaixo para criar um novo jogo
-              </DialogDescription>
-            </DialogHeader>
-            <CreateGameForm 
-              onClose={() => setIsCreateDialogOpen(false)} 
-              onSuccess={() => {
-                setIsCreateDialogOpen(false);
-                fetchGames();
+    <>
+      <BFListView
+        title="Gerenciar Jogos"
+        description="Crie e gerencie jogos e eventos esportivos"
+        createButton={{
+          label: 'Novo Jogo',
+          onClick: () => setIsCreateDialogOpen(true),
+        }}
+        stats={listStats}
+        searchPlaceholder="Buscar por nome ou local..."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={{
+          value: filterStatus,
+          onChange: setFilterStatus,
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'scheduled', label: 'Agendado' },
+            { value: 'closed', label: 'Aguardando Pagamentos' },
+            { value: 'completed', label: 'Concluído' },
+            { value: 'cancelled', label: 'Cancelado' },
+          ],
+        }}
+        columns={columns}
+        data={games}
+        loading={loading}
+        onRowClick={onSelectGame ? (row: Game) => onSelectGame(row.id) : undefined}
+        rowActions={(row: Game) => (
+          <div className="flex items-center gap-2">
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Ver Detalhes"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/admin/games/${row.id}`);
               }}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <BFCard variant="elevated" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--info]/10 p-2 rounded-lg">
-              <BFIcons.Calendar size={20} color="var(--info)" />
-            </div>
-            <div>
-              <p className="text-sm text-[--muted-foreground]">Agendados</p>
-              <h3 className="text-xl font-semibold text-[--foreground]">
-                {stats.open || 0}
-              </h3>
-            </div>
+              data-test={`view-game-${row.id}`}
+            >
+              <BFIcons.Eye size={18} color="var(--primary)" />
+            </button>
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Cancelar Jogo"
+              onClick={(e) => {
+                e.stopPropagation();
+                setGameToDelete(row.id);
+              }}
+              disabled={row.status === 'cancelled' || row.status === 'completed' || row.status === 'closed'}
+              data-test={`cancel-game-${row.id}`}
+            >
+              <BFIcons.XCircle size={18} color="var(--destructive)" />
+            </button>
+            <button
+              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              title="Fechar Jogo"
+              onClick={(e) => {
+                e.stopPropagation();
+                setGameToClose(row.id);
+              }}
+              disabled={row.status === 'cancelled' || row.status === 'completed' || row.status === 'closed'}
+              data-test={`close-game-${row.id}`}
+            >
+              <BFIcons.CheckCircle size={18} color="var(--success)" />
+            </button>
           </div>
-        </BFCard>
-
-        <BFCard variant="elevated" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--success]/10 p-2 rounded-lg">
-              <BFIcons.CheckCircle size={20} color="var(--success)" />
-            </div>
-            <div>
-              <p className="text-sm text-[--muted-foreground]">Concluídos</p>
-              <h3 className="text-xl font-semibold text-[--foreground]">
-                {stats.finished || 0}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="elevated" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--destructive]/10 p-2 rounded-lg">
-              <BFIcons.XCircle size={20} color="var(--destructive)" />
-            </div>
-            <div>
-              <p className="text-sm text-[--muted-foreground]">Cancelados</p>
-              <h3 className="text-xl font-semibold text-[--foreground]">
-                {stats.cancelled || 0}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-
-        <BFCard variant="elevated" padding="md">
-          <div className="flex items-center gap-3">
-            <div className="bg-[--primary]/10 p-2 rounded-lg">
-              <BFIcons.Users size={20} color="var(--primary)" />
-            </div>
-            <div>
-              <p className="text-sm text-[--muted-foreground]">Total Jogadores</p>
-              <h3 className="text-xl font-semibold text-[--foreground]">
-                {stats.activePlayers || 0}
-              </h3>
-            </div>
-          </div>
-        </BFCard>
-      </div>
-
-      {/* Filters */}
-      <BFCard variant="elevated" padding="lg">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <BFInput
-              placeholder="Buscar por nome ou local..."
-              value={searchTerm}
-              onChange={(value) => setSearchTerm(value)}
-              icon={<BFIcons.Search size={20} />}
-              fullWidth
-              data-test="search-games"
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger data-test="filter-status" className="h-10 border border-[--border] bg-white dark:bg-gray-800">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="scheduled">Agendado</SelectItem>
-                <SelectItem value="closed">Aguardando Pagamentos</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </BFCard>
-
-      {/* Table */}
-      <BFCard variant="elevated" padding="none">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-              <p className="mt-2 text-[--muted-foreground]">Carregando jogos...</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <BFTable
-              columns={columns}
-              data={games}
-              onRowClick={onSelectGame ? (row: Game) => onSelectGame(row.id) : undefined}
-              actions={(row: Game) => (
-                <div className="flex items-center gap-2">
-                  <BFButton
-                    variant="secondary"
-                    size="sm"
-                    icon={<BFIcons.Eye size={16} />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/admin/games/${row.id}`);
-                    }}
-                    data-test={`view-game-${row.id}`}
-                  >
-                    Ver detalhes
-                  </BFButton>
-                  <BFButton
-                    variant="danger"
-                    size="sm"
-                    icon={<BFIcons.XCircle size={16} />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGameToDelete(row.id);
-                    }}
-                    disabled={row.status === 'cancelled' || row.status === 'completed' || row.status === 'closed'}
-                    data-test={`cancel-game-${row.id}`}
-                  >
-                    Cancelar
-                  </BFButton>
-                  <BFButton
-                    variant="success"
-                    size="sm"
-                    icon={<BFIcons.CheckCircle size={16} />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGameToClose(row.id);
-                    }}
-                    disabled={row.status === 'cancelled' || row.status === 'completed' || row.status === 'closed'}
-                    data-test={`close-game-${row.id}`}
-                  >
-                    Fechar
-                  </BFButton>
-                </div>
-              )}
-              data-test="games-table"
-            />
-            
-            <BFPagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              totalItems={pagination.total}
-              itemsPerPage={pagination.limit}
-              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-              data-test="games-pagination"
-            />
-          </>
         )}
-      </BFCard>
+        pagination={{
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+        }}
+        dataTest="manage-games"
+      />
+
+      {/* Create Game Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Jogo</DialogTitle>
+            <DialogDescription>
+              Preencha as informações abaixo para criar um novo jogo
+            </DialogDescription>
+          </DialogHeader>
+          <CreateGameForm
+            onClose={() => setIsCreateDialogOpen(false)}
+            onSuccess={() => {
+              setIsCreateDialogOpen(false);
+              fetchGames();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de confirmação de cancelamento */}
       <AlertDialog open={!!gameToDelete} onOpenChange={(open) => !open && setGameToDelete(null)}>
@@ -491,7 +425,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 };
 
@@ -533,7 +467,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         setChats([]);
         return;
       }
-      
+
       setLoadingChats(true);
       try {
         const chatsResponse = await chatsAPI.getChatsByWorkspace(formData.workspaceId);
@@ -576,7 +510,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         chatId: formData.chatId,
         workspaceId: formData.workspaceId
       });
-      
+
       toast.success('🎉 Jogo agendado com sucesso!');
       onSuccess();
     } catch (err: any) {
@@ -593,16 +527,16 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        <BFInput 
-          label="Nome do Jogo" 
-          placeholder="Ex: Pelada Sábado" 
+        <BFInput
+          label="Nome do Jogo"
+          placeholder="Ex: Pelada Sábado"
           value={formData.name}
           onChange={(val) => handleChange('name', val)}
-          fullWidth 
-          required 
-        />     
+          fullWidth
+          required
+        />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <BFSelect
           label="Tipo de Jogo"
@@ -615,38 +549,38 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
           onChange={(val) => handleChange('type', String(val))}
           placeholder="Selecione o tipo"
         />
-        <BFInput 
-          label="Local" 
-          placeholder="Ex: Campo do Parque Central" 
+        <BFInput
+          label="Local"
+          placeholder="Ex: Campo do Parque Central"
           value={formData.location}
           onChange={(val) => handleChange('location', val)}
-          fullWidth 
-          required 
+          fullWidth
+          required
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <BFDateInput 
-          label="Data" 
+        <BFDateInput
+          label="Data"
           value={formData.date}
           onChange={(val) => handleChange('date', val)}
-          fullWidth 
-          required 
+          fullWidth
+          required
         />
-        <BFInput 
-          label="Horário" 
-          type="time" 
+        <BFInput
+          label="Horário"
+          type="time"
           value={formData.time}
           onChange={(val) => handleChange('time', val)}
-          fullWidth 
-          required 
+          fullWidth
+          required
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <BFMoneyInput 
-          label="Valor por Jogador" 
-          placeholder="15,00" 
+        <BFMoneyInput
+          label="Valor por Jogador"
+          placeholder="15,00"
           value={formData.pricePerPlayer}
           onChange={(val, cents) => {
             setFormData(prev => ({ ...prev, pricePerPlayer: val, priceInCents: cents }));
@@ -655,14 +589,14 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
           showCentsPreview={false}
           helperText="Digite o valor em reais (ex: 15,00)"
         />
-        <BFInput 
-          label="Máximo de Jogadores" 
-          type="number" 
-          placeholder="20" 
+        <BFInput
+          label="Máximo de Jogadores"
+          type="number"
+          placeholder="20"
           value={formData.maxPlayers}
           onChange={(val) => handleChange('maxPlayers', val)}
-          fullWidth 
-          required 
+          fullWidth
+          required
         />
       </div>
 
