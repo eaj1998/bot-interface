@@ -11,9 +11,8 @@ import { BFListView } from '../components/BFListView';
 import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { gamesAPI, chatsAPI, workspacesAPI } from '../lib/axios';
 import type { Game } from '../lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { BFAlertMessage } from '../components/BF-AlertMessage';
 import { toast } from 'sonner';
 

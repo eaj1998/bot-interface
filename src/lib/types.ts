@@ -179,4 +179,6 @@ export interface Chat {
   schedule?: ChatSchedule;
   createdAt: string;
   updatedAt: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
 }
