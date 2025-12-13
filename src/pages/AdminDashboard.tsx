@@ -5,6 +5,7 @@ import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
 import { BFSelect } from '../components/BF-Select';
 import { api, workspacesAPI } from '../lib/axios';
+import { formatDateWithoutTimezone } from '../lib/dateUtils';
 import { toast } from 'sonner';
 
 interface DashboardStats {
@@ -132,6 +133,11 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const formatDate = (dateString: string): string => {
+    // Check if it's a YYYY-MM-DD format (game dates from API)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return formatDateWithoutTimezone(dateString).split('/').slice(0, 2).join('/');
+    }
+    // Otherwise it's an ISO timestamp (debt dates)
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
@@ -356,8 +362,8 @@ export const AdminDashboard: React.FC = () => {
                     )}
                     <div className="flex-1">
                       <p className={`${(debt.category === 'general' || debt.category === 'field-payment')
-                          ? 'text-[--warning] font-semibold'
-                          : 'text-[--foreground]'
+                        ? 'text-[--warning] font-semibold'
+                        : 'text-[--foreground]'
                         }`}>
                         {(debt.category === 'general' || debt.category === 'field-payment') ? 'Débito Geral' : debt.playerName}
                       </p>
