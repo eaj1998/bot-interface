@@ -698,7 +698,8 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                 )}
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
@@ -724,6 +725,80 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {confirmedPlayers.length > 0 ? (
+                  confirmedPlayers.map((player) => (
+                    <div
+                      key={`${player.id}-${player.slot}`}
+                      className="p-4 bg-accent rounded-lg border border-border"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">#{player.slot}</span>
+                          <span className="text-sm font-medium text-foreground">{player.name}</span>
+                          {player.isGoalkeeper && (
+                            <BFBadge variant="info" size="sm">
+                              🧤
+                            </BFBadge>
+                          )}
+                        </div>
+                        {player.isGoalkeeper ? (
+                          <BFBadge variant="neutral" size="sm">
+                            Isento
+                          </BFBadge>
+                        ) : player.isPaid ? (
+                          <BFBadge variant="success" size="sm">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Pago
+                          </BFBadge>
+                        ) : (
+                          <BFBadge variant="warning" size="sm">
+                            Pendente
+                          </BFBadge>
+                        )}
+                      </div>
+                      {player.phone && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {formatPhone(player.phone)}
+                        </p>
+                      )}
+                      {(gameInfo?.status === 'open' || gameInfo?.status === 'closed') && (
+                        <div className="flex items-center gap-2 pt-3 border-t border-border">
+                          {!player.isGoalkeeper && gameInfo?.status === 'closed' && (
+                            <BFButton
+                              variant={player.isPaid ? "success" : "success"}
+                              size="sm"
+                              onClick={() => handleTogglePayment(player.slot, player.isPaid, player.name)}
+                              disabled={togglingPayment === String(player.slot)}
+                              data-test={`toggle-payment-${player.slot}`}
+                              className="flex-1"
+                            >
+                              {togglingPayment === String(player.slot) ? '...' : (player.isPaid ? 'Marcar pendente' : 'Marcar pago')}
+                            </BFButton>
+                          )}
+                          {gameInfo?.status === 'open' && (
+                            <BFButton
+                              variant="danger"
+                              size="sm"
+                              onClick={() => setPlayerToRemove({ id: player.id, name: player.name })}
+                              data-test={`remove-player-${player.id}`}
+                              className="flex-1"
+                            >
+                              Remover
+                            </BFButton>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    Nenhum jogador confirmado
+                  </div>
+                )}
+              </div>
             </div>
           </BFCard>
 
@@ -737,7 +812,8 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                   </h2>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
@@ -750,6 +826,26 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                       {gameInfo.waitlist.map((player) => renderWaitlistRow(player))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {gameInfo.waitlist.map((player) => (
+                    <div
+                      key={`${player.id}-${player.position}`}
+                      className="p-4 bg-accent rounded-lg border border-border"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground">#{player.position}</span>
+                        <span className="text-sm font-medium text-foreground">{player.name}</span>
+                      </div>
+                      {player.phone && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatPhone(player.phone)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </BFCard>
@@ -765,7 +861,8 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                   </h2>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
@@ -778,6 +875,26 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                       {gameInfo.outlist.map((player, index) => renderOutlistRow(player, index))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                  {gameInfo.outlist.map((player, index) => (
+                    <div
+                      key={`${player.id}-${index}`}
+                      className="p-4 bg-accent rounded-lg border border-border"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                        <span className="text-sm font-medium text-foreground">{player.name}</span>
+                      </div>
+                      {player.phone && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatPhone(player.phone)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </BFCard>
