@@ -365,7 +365,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
 
       {/* Create Game Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Criar Novo Jogo</DialogTitle>
             <DialogDescription>
@@ -578,7 +578,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         <BFAlertMessage variant="error" message={error} />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BFSelect
           label="Workspace"
           options={workspaces.map(ws => ({ value: ws.id, label: ws.name }))}
@@ -607,7 +607,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BFSelect
           label="Tipo de Jogo"
           options={[
@@ -629,7 +629,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BFDateInput
           label="Data"
           value={formData.date}
@@ -647,7 +647,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BFMoneyInput
           label="Valor por Jogador"
           placeholder="15,00"
@@ -670,7 +670,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
         <BFButton variant="ghost" onClick={onClose} type="button" disabled={loading}>
           Cancelar
         </BFButton>

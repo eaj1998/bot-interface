@@ -557,7 +557,7 @@ export const playersAPI = {
   updatePlayer: async (playerId: string, data: {
     name?: string;
     nick?: string;
-    phone?: string;
+    phoneE164?: string;
     status?: 'active' | 'inactive' | 'suspended';
     isGoalie?: boolean;
     role?: 'admin' | 'user';

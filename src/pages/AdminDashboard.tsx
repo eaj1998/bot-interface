@@ -84,14 +84,12 @@ export const AdminDashboard: React.FC = () => {
         const response = await api.get(url, { signal: abortController.signal });
         setDashboardData(response.data);
       } catch (error: any) {
-        // Don't show error toast or update loading state if request was canceled
         if (error.code !== 'ERR_CANCELED' && error.name !== 'CanceledError') {
           console.error('Error loading dashboard:', error);
           toast.error('Erro ao carregar dashboard');
           setLoading(false);
         }
       } finally {
-        // Only set loading to false if request completed successfully
         if (!abortController.signal.aborted) {
           setLoading(false);
         }
@@ -100,7 +98,6 @@ export const AdminDashboard: React.FC = () => {
 
     init();
 
-    // Cleanup function to abort pending requests
     return () => {
       abortController.abort();
     };
@@ -133,11 +130,9 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const formatDate = (dateString: string): string => {
-    // Check if it's a YYYY-MM-DD format (game dates from API)
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       return formatDateWithoutTimezone(dateString).split('/').slice(0, 2).join('/');
     }
-    // Otherwise it's an ISO timestamp (debt dates)
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
@@ -185,14 +180,14 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6" data-test="admin-dashboard">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-[--foreground] mb-2">Dashboard Administrativo</h1>
           <p className="text-[--muted-foreground]">
             Visão geral do sistema Bot Fut
           </p>
         </div>
-        <div className="w-64">
+        <div className="w-full sm:w-64">
           <BFSelect
             label="Workspace"
             value={selectedWorkspace}
@@ -212,7 +207,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <BFCard variant="stat" padding="md" data-test="stat-players">
           <div className="flex items-start justify-between">
             <div>

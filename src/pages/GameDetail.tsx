@@ -483,44 +483,45 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
   return (
     <div className="h-full bg-background" data-test="game-detail-page">
       {/* Header */}
-      <div className="bg-card border border-border rounded-lg px-6 py-4 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h1 className="text-2xl text-foreground mb-2">{gameInfo.name}</h1>
-            <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
+      <div className="bg-card border border-border rounded-lg px-4 sm:px-6 py-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
+          <div className="flex-1 min-w-0 w-full sm:w-auto">
+            <h1 className="text-xl sm:text-2xl text-foreground mb-2 truncate">{gameInfo.name}</h1>
+            <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground flex-wrap text-xs sm:text-sm">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                <span className="text-sm">{formatDate(gameInfo.date)}</span>
+                <span>{formatDate(gameInfo.date)}</span>
               </div>
               <span className="text-muted-foreground">•</span>
               <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm">{gameInfo.time}</span>
+                <span>{gameInfo.time}</span>
               </div>
               <span className="text-muted-foreground">•</span>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm">{gameInfo.location}</span>
+                <span className="truncate">{gameInfo.location}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {getStatusBadge()}
             <BFButton
               variant="primary"
               icon={<ArrowLeft className="w-4 h-4" />}
               onClick={handleBack}
               data-test="back-button"
+              className="flex-1 sm:flex-none"
             >
-              Voltar
+              <span className="hidden sm:inline">Voltar</span>
             </BFButton>
           </div>
         </div>
       </div>
 
       {/* Conteúdo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* COLUNA ESQUERDA: Info + Resumo Financeiro */}
         <div className="space-y-6">
           {/* Informações Gerais */}
@@ -680,7 +681,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
           {/* Lista de Jogadores */}
           <BFCard>
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 mb-4">
                 <h2 className="text-lg text-foreground">
                   Jogadores confirmados ({confirmedPlayers.length})
                 </h2>

@@ -109,7 +109,7 @@ export const ManagePlayers: React.FC = () => {
     await playersAPI.updatePlayer(playerToEdit.id, {
       name: updatedData.name,
       nick: updatedData.nick,
-      phone: updatedData.phone,
+      phoneE164: updatedData.phone,
       status: updatedData.status,
       isGoalie: updatedData.isGoalie,
     });

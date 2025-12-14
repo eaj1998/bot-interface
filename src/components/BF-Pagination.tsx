@@ -57,16 +57,16 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
 
   return (
     <div
-      className="flex items-center justify-between px-6 py-4 border-t border-border"
+      className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between px-4 sm:px-6 py-4 border-t border-border gap-3"
       data-test={dataTest}
     >
       {showInfo && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground hidden md:block">
           Mostrando {startItem} até {endItem} de {totalItems} itens
         </p>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end flex-wrap">
         <BFButton
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
@@ -75,7 +75,7 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
           className="whitespace-nowrap flex-shrink-0"
           data-test={`${dataTest}-previous`}
         >
-          Anterior
+          <span className="hidden sm:inline">Anterior</span>
         </BFButton>
 
         <div className="flex items-center gap-1">
@@ -83,7 +83,7 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
             <>
               <button
                 onClick={() => onPageChange(1)}
-                className="px-3 py-1 rounded-md text-sm transition-colors bg-card border border-border hover:bg-accent text-foreground"
+                className="px-3 py-1 rounded-md text-sm transition-colors bg-card border border-border hover:bg-accent text-foreground min-w-[36px]"
                 data-test={`${dataTest}-page-1`}
               >
                 1
@@ -98,11 +98,10 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
             <button
               key={pageNumber}
               onClick={() => onPageChange(pageNumber)}
-              className={`px-3 py-1 rounded-md text-sm transition-colors ${
-                currentPage === pageNumber
+              className={`px-3 py-1 rounded-md text-sm transition-colors min-w-[36px] ${currentPage === pageNumber
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card border border-border hover:bg-accent text-foreground'
-              }`}
+                }`}
               data-test={`${dataTest}-page-${pageNumber}`}
             >
               {pageNumber}
@@ -116,7 +115,7 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
               )}
               <button
                 onClick={() => onPageChange(totalPages)}
-                className="px-3 py-1 rounded-md text-sm transition-colors bg-card border border-border hover:bg-accent text-foreground"
+                className="px-3 py-1 rounded-md text-sm transition-colors bg-card border border-border hover:bg-accent text-foreground min-w-[36px]"
                 data-test={`${dataTest}-page-${totalPages}`}
               >
                 {totalPages}
@@ -133,7 +132,7 @@ export const BFPagination: React.FC<BFPaginationProps> = ({
           data-test={`${dataTest}-next`}
         >
           <span className="inline-flex items-center gap-1">
-            Próxima
+            <span className="hidden sm:inline">Próxima</span>
             <BFIcons.ChevronRight size={16} />
           </span>
         </BFButton>

@@ -55,7 +55,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Editar Jogador</DialogTitle>
                     <DialogDescription>
@@ -63,7 +63,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Nome</label>
                         <BFInput
@@ -111,7 +111,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                         </Select>
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div className="sm:col-span-2">
                         <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
                             <input
                                 type="checkbox"
@@ -127,7 +127,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                     </div>
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
                     <BFButton
                         variant="secondary"
                         onClick={onClose}

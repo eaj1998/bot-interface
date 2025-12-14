@@ -280,19 +280,20 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
             <BFButton
               variant="secondary"
               icon={<BFIcons.ArrowLeft size={20} />}
               onClick={() => onBack ? onBack() : navigate('/admin/workspaces')}
+              className="flex-shrink-0"
             >
-              Voltar
+              <span className="hidden sm:inline">Voltar</span>
             </BFButton>
-            <div>
-              <h1 className="text-[--foreground] mb-1">{workspace.name}</h1>
-              <p className="text-[--muted-foreground] text-sm">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[--foreground] mb-1 truncate">{workspace.name}</h1>
+              <p className="text-[--muted-foreground] text-sm truncate">
                 {workspace.slug} • {workspace.platform}
               </p>
             </div>
@@ -301,6 +302,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
             variant="primary"
             icon={<BFIcons.Settings size={20} />}
             onClick={handleOpenSettings}
+            className="w-full sm:w-auto"
           >
             Configurações
           </BFButton>
@@ -308,7 +310,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <BFCard variant="elevated" padding="md">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[var(--primary)]/10">
@@ -411,10 +413,10 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
 
       {/* Chats List */}
       <BFCard variant="elevated" padding="lg">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 mb-4">
           <h2 className="text-[--foreground]">Chats ({filteredChats.length})</h2>
-          <div className="flex items-center gap-3">
-            <div className="w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-64">
               <BFInput
                 placeholder="Buscar chats..."
                 value={searchTerm}
@@ -427,6 +429,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
               variant="primary"
               icon={<BFIcons.Plus size={20} />}
               onClick={() => setCreateDialogOpen(true)}
+              className="w-full sm:w-auto"
             >
               Adicionar Chat
             </BFButton>
@@ -442,7 +445,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
           ) : (
             filteredChats.map((chat) => (
               <BFCard key={chat.id} variant="outlined" padding="md" hover>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-[--foreground]">{chat.label || chat.name || 'Chat sem nome'}</h3>
@@ -476,6 +479,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
                     size="sm"
                     icon={<BFIcons.Edit size={16} />}
                     onClick={() => handleEditChat(chat)}
+                    className="w-full sm:w-auto"
                   >
                     Editar
                   </BFButton>
@@ -508,7 +512,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
             <div className="border-t border-[--border] pt-4">
               <h4 className="text-sm font-medium text-[--foreground] mb-3">Schedule</h4>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <BFSelect
                     label="Dia da Semana"
@@ -580,7 +584,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <BFInput
                   label="Chat ID"
@@ -608,7 +612,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
             <div className="border-t border-[--border] pt-4">
               <h4 className="text-sm font-medium text-[--foreground] mb-3">Schedule</h4>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <BFSelect
                     label="Dia da Semana"
@@ -737,7 +741,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
                     Mapeamento de Categorias
                   </h4>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <BFInput
                         label="Field Payment"

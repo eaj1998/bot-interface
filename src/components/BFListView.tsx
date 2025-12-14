@@ -168,7 +168,7 @@ export function BFListView<T extends { id: string }>({
 
             {/* Statistics Cards */}
             {stats.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {stats.map((stat, index) => (
                         <BFCard
                             key={index}
@@ -207,9 +207,9 @@ export function BFListView<T extends { id: string }>({
             {/* Filters */}
             {(onSearchChange || statusFilter || customFilters) && (
                 <BFCard variant="elevated" padding="lg">
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         {onSearchChange && (
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <BFInput
                                     placeholder={searchPlaceholder}
                                     value={searchTerm}
@@ -221,7 +221,7 @@ export function BFListView<T extends { id: string }>({
                             </div>
                         )}
                         {statusFilter && (
-                            <div className="w-full md:w-48">
+                            <div className="w-full sm:w-48">
                                 <Select value={statusFilter.value} onValueChange={statusFilter.onChange}>
                                     <SelectTrigger
                                         data-test={`${dataTest}-filter-status`}

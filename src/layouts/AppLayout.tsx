@@ -199,7 +199,7 @@ export default function AppLayout({ role }: AppLayoutProps) {
             <div className="flex items-center gap-3">
               {/* Mobile Menu Button */}
               <button
-                className="lg:hidden p-2 rounded-lg hover:bg-[--accent] transition-colors cursor-pointer"
+                className="lg:hidden p-3 rounded-lg hover:bg-[--accent] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="Abrir Menu"
               >
@@ -219,7 +219,7 @@ export default function AppLayout({ role }: AppLayoutProps) {
               {/* Settings Dropdown */}
               <div className="relative">
                 <button
-                  className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group cursor-pointer"
+                  className="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                   onClick={() => setShowSettingsMenu(!showSettingsMenu)}
                   aria-label="Configurações"
                 >
@@ -282,7 +282,7 @@ export default function AppLayout({ role }: AppLayoutProps) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 bg-[--background]">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-[--background]">
           <div className="max-w-[1600px] mx-auto">
             <Outlet />
           </div>

@@ -99,7 +99,7 @@ export const PlayerDetail: React.FC = () => {
       await playersAPI.updatePlayer(playerId, {
         name: editForm.name,
         nick: editForm.nick,
-        phone: editForm.phone,
+        phoneE164: editForm.phone,
         status: editForm.status,
         isGoalie: editForm.isGoalie,
         role: editForm.role,
@@ -263,17 +263,18 @@ export const PlayerDetail: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <BFButton
             variant="secondary"
             onClick={() => navigate('/admin/players')}
             icon={<BFIcons.ArrowLeft className="w-4 h-4" />}
             iconPosition="left"
+            className="flex-shrink-0"
           >
-            Voltar
+            <span className="hidden sm:inline">Voltar</span>
           </BFButton>
-          <h1 className="text-3xl font-bold">Detalhes do Jogador</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold truncate">Detalhes do Jogador</h1>
         </div>
 
         {isAdmin && (
@@ -282,14 +283,15 @@ export const PlayerDetail: React.FC = () => {
             onClick={() => setIsEditDialogOpen(true)}
             icon={<BFIcons.Edit className="w-4 h-4" />}
             iconPosition="left"
+            className="w-full sm:w-auto"
           >
             Editar jogador
           </BFButton>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <BFCard className="md:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <BFCard className="lg:col-span-1">
           <div className="flex flex-col items-center text-center space-y-4">
             {player.profilePicture ? (
               <img
@@ -316,9 +318,9 @@ export const PlayerDetail: React.FC = () => {
           </div>
         </BFCard>
 
-        <BFCard className="md:col-span-2">
+        <BFCard className="lg:col-span-2">
           <h3 className="text-xl font-semibold mb-4">Informações</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Telefone</p>
               <p className="font-medium">{formatPhone(player.phone)}</p>
@@ -341,7 +343,7 @@ export const PlayerDetail: React.FC = () => {
         </BFCard>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <BFCard>
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">Saldo</p>
@@ -371,7 +373,7 @@ export const PlayerDetail: React.FC = () => {
       </div>
 
       <BFCard>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-3 mb-4">
           <h3 className="text-xl font-semibold">Lista de Débitos</h3>
           <div className="text-sm text-muted-foreground">
             Total: {debts.length} | Pendentes: {pendingDebts.length} | Pagos: {paidDebts.length}
@@ -391,7 +393,7 @@ export const PlayerDetail: React.FC = () => {
       </BFCard>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Jogador</DialogTitle>
             <DialogDescription>
@@ -399,7 +401,7 @@ export const PlayerDetail: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome</label>
               <BFInput
@@ -484,7 +486,7 @@ export const PlayerDetail: React.FC = () => {
               </Select>
             </div>
 
-            <div className="flex items-center space-x-2 md:col-span-2">
+            <div className="flex items-center space-x-2 sm:col-span-2">
               <input
                 type="checkbox"
                 id="isGoalie"
