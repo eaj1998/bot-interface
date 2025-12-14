@@ -26,6 +26,8 @@ export const Login: React.FC = () => {
       if (authAPI.isAuthenticated()) {
         try {
           const user = await authAPI.getMe();
+          // Save user data to localStorage to persist role and other info
+          tokenService.setUser(user);
           if (user.role === 'admin') {
             navigate('/admin/dashboard', { replace: true });
           } else {

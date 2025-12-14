@@ -10,7 +10,7 @@ import { debtsAPI, gamesAPI, ledgersAPI } from '../lib/axios';
 import { formatDateWithoutTimezone } from '../lib/dateUtils';
 
 export const UserDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [debts, setDebts] = useState<any[]>([]);
   const [games, setGames] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -40,7 +40,19 @@ export const UserDashboard: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const initUser = async () => {
+      await refreshUser();
+    };
+    initUser();
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
+      if (!user || !user.id) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
 
@@ -59,17 +71,17 @@ export const UserDashboard: React.FC = () => {
         const gamesResponse = await gamesAPI.getMyOpenGames();
         const gamesData = gamesResponse.data || gamesResponse;
         const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
+          ...game,
           id: game.id,
           name: game.title,
           status: game.status === 'open' ? 'scheduled' : game.status,
-          date: game.date,
-          time: new Date(game.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          date: formatDateWithoutTimezone(game.date),
+          time: game.time,
           location: 'A definir',
           pricePerPlayer: game.priceCents / 100,
           currentPlayers: game.currentPlayers ?? 0,
           maxPlayers: game.maxPlayers ?? 0,
-          paid: game.playerInfo?.paid || false,
-          ...game
+          paid: game.playerInfo?.paid || false
         })) : [];
         setGames(mappedGames);
 
@@ -104,7 +116,7 @@ export const UserDashboard: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const pendingDebts = debts.filter(f => f.type === 'debit');
   const totalDebt = pendingDebts.filter(f => f.status === 'pendente' && f.type === 'debit').reduce((sum, d) => sum + d.amount, 0);
@@ -213,9 +225,9 @@ export const UserDashboard: React.FC = () => {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm sm:text-base text-[--muted-foreground] mb-1">Status</p>
-              <BFBadge variant={user.status === 'active' ? 'success' : 'error'} size="lg">{user.status === 'active' ? 'Ativo' : 'Inativo'}</BFBadge>
+              <BFBadge variant={user?.status === 'active' ? 'success' : 'error'} size="lg">{user?.status === 'active' ? 'Ativo' : 'Inativo'}</BFBadge>
               <p className="text-xs sm:text-sm text-[--muted-foreground] mt-2">
-                Membro desde {new Date(user.createdAt).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })}
+                Membro desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' }) : 'N/A'}
               </p>
             </div>
             <div className="bg-[--success]/10 p-2 sm:p-3 rounded-lg">
@@ -306,7 +318,7 @@ export const UserDashboard: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm sm:text-base text-[--foreground] font-medium truncate">{game.name}</h4>
                         <p className="text-xs sm:text-sm text-[--muted-foreground]">
-                          {formatDateWithoutTimezone(game.date)} às {game.time}
+                          {(game.date)} às {game.time}
                         </p>
                       </div>
                     </div>

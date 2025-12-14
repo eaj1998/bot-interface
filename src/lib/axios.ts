@@ -203,7 +203,8 @@ export const authAPI = {
    */
   getMe: async () => {
     const response = await api.get('/auth/me');
-    return response.data;
+    // API returns {success: true, data: {user data}}, so we need to extract the data
+    return response.data.data || response.data;
   },
 
   /**

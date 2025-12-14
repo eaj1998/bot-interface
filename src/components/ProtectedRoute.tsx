@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { authAPI } from '../lib/axios';
+import { authAPI, tokenService } from '../lib/axios';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,7 +19,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       }
 
       try {
-        await authAPI.getMe();
+        const userData = await authAPI.getMe();
+        // Save user data to localStorage to persist role and other info
+        tokenService.setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Authentication failed:', error);
