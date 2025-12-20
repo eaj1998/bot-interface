@@ -179,6 +179,89 @@ export interface Chat {
   schedule?: ChatSchedule;
   createdAt: string;
   updatedAt: string;
-  lastMessage?: string;
-  lastMessageAt?: string;
 }
+
+// BBQ Types
+export enum BBQStatus {
+  OPEN = 'open',
+  CLOSED = 'closed',
+  FINISHED = 'finished',
+  CANCELLED = 'cancelled',
+}
+
+export interface BBQParticipant {
+  userId: string;
+  userName: string;
+  invitedBy: string | null;
+  invitedByName?: string | null;
+  isPaid: boolean;
+  isGuest: boolean;
+  debtId?: string;
+}
+
+export interface BBQResponseDto {
+  id: string;
+  chatId: string;
+  workspaceId: string;
+  status: BBQStatus;
+  date: string; // ISO date string
+  createdAt: string;
+  closedAt?: string;
+  finishedAt?: string;
+  participants: BBQParticipant[];
+  valuePerPerson: number | null;
+  participantCount: number;
+}
+
+export interface BBQListResponseDto {
+  bbqs: BBQResponseDto[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
+export interface BBQStatsDto {
+  total: number;
+  open: number;
+  closed: number;
+  finished: number;
+  cancelled: number;
+}
+
+export interface CreateBBQDto {
+  chatId: string;
+  workspaceId: string;
+  date?: string; // ISO date string
+  valuePerPerson?: number;
+}
+
+export interface UpdateBBQDto {
+  date?: string; // ISO date string
+  valuePerPerson?: number;
+  status?: BBQStatus;
+}
+
+export interface UpdateBBQStatusDto {
+  status: BBQStatus;
+}
+
+export interface BBQFilterDto {
+  status?: BBQStatus;
+  chatId?: string;
+  workspaceId?: string;
+  dateFrom?: string; // ISO date string
+  dateTo?: string; // ISO date string
+  page?: number;
+  limit?: number;
+}
+
+// Legacy interface for backward compatibility
+export interface BBQ {
+  _id: string;
+  status: 'open' | 'closed' | 'finished' | 'cancelled';
+  date: string; // ISO date string
+  participants: BBQParticipant[];
+  valuePerPerson: number; // in cents
+}
+

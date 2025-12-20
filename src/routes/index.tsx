@@ -20,6 +20,8 @@ import { AddDebit } from '../pages/AddDebit';
 
 import { UserDashboard } from '../pages/UserDashboard';
 import { UserProfile } from '../pages/UserProfile';
+import { BBQDemo } from '@/pages/BBQDemo';
+import { BBQDetails } from '@/pages/BBQDetails';
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +44,14 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <AdminDashboard />,
+      },
+      {
+        path: 'bbq',
+        element: <BBQDemo />,
+      },
+      {
+        path: 'bbq/:bbqId',
+        element: <BBQDetails />,
       },
       {
         path: 'games',

@@ -37,6 +37,8 @@ export default function AppLayout({ role }: AppLayoutProps) {
       setActiveItem('debts');
     } else if (currentPath.startsWith('/admin/workspaces')) {
       setActiveItem('workspaces');
+    } else if (currentPath.startsWith('/admin/bbq')) {
+      setActiveItem('bbq');
     } else if (currentPath.startsWith('/admin/my-dashboard')) {
       setActiveItem('my-dashboard');
     } else if (currentPath.startsWith('/admin/my-profile')) {
@@ -91,6 +93,13 @@ export default function AppLayout({ role }: AppLayoutProps) {
       label: 'Workspaces',
       icon: 'Settings',
       path: '/admin/workspaces',
+      roles: ['admin'],
+    },
+    {
+      id: 'bbq',
+      label: 'Churrascos',
+      icon: 'Flame',
+      path: '/admin/bbq',
       roles: ['admin'],
     },
     {

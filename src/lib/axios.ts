@@ -654,5 +654,165 @@ export const playersAPI = {
   },
 };
 
+/**
+ * API de BBQ (Churrascos)
+ */
+export const bbqAPI = {
+  /**
+   * Lista todos os churrascos com paginação e filtros
+   * @swagger GET /api/bbq
+   */
+  getAllBBQs: async (filters?: {
+    status?: 'open' | 'closed' | 'finished' | 'cancelled';
+    chatId?: string;
+    workspaceId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const params: any = {
+      page: filters?.page || 1,
+      limit: filters?.limit || 20,
+    };
+
+    if (filters?.status) params.status = filters.status;
+    if (filters?.chatId) params.chatId = filters.chatId;
+    if (filters?.workspaceId) params.workspaceId = filters.workspaceId;
+    if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+    if (filters?.dateTo) params.dateTo = filters.dateTo;
+
+    const response = await api.get('/bbq', { params });
+    return response.data;
+  },
+
+  /**
+   * Obtém estatísticas de churrascos
+   * @swagger GET /api/bbq/stats
+   */
+  getStats: async (workspaceId?: string) => {
+    const params: any = {};
+    if (workspaceId) params.workspaceId = workspaceId;
+
+    const response = await api.get('/bbq/stats', { params });
+    return response.data.data || response.data;
+  },
+
+  /**
+   * Obtém detalhes de um churrasco específico
+   * @swagger GET /api/bbq/{id}
+   */
+  getBBQById: async (bbqId: string) => {
+    const response = await api.get(`/bbq/${bbqId}`);
+    return response.data;
+  },
+
+  /**
+   * Cria um novo churrasco
+   * @swagger POST /api/bbq
+   */
+  createBBQ: async (data: {
+    chatId?: string;
+    workspaceId?: string;
+    date?: string;
+    valuePerPerson?: number;
+  }) => {
+    const response = await api.post('/bbq', data);
+    return response.data;
+  },
+
+  /**
+   * Atualiza um churrasco existente
+   * @swagger PUT /api/bbq/{id}
+   */
+  updateBBQ: async (bbqId: string, data: {
+    date?: string;
+    valuePerPerson?: number;
+    status?: 'open' | 'closed' | 'finished' | 'cancelled';
+  }) => {
+    const response = await api.put(`/bbq/${bbqId}`, data);
+    return response.data;
+  },
+
+  /**
+   * Atualiza apenas o status de um churrasco
+   * @swagger PATCH /api/bbq/{id}/status
+   */
+  updateStatus: async (bbqId: string, status: 'open' | 'closed' | 'finished' | 'cancelled') => {
+    const response = await api.patch(`/bbq/${bbqId}/status`, { status });
+    return response.data;
+  },
+
+  /**
+   * Fecha um churrasco e processa débitos
+   * @swagger POST /api/bbq/{id}/close
+   */
+  closeBBQ: async (bbqId: string) => {
+    const response = await api.post(`/bbq/${bbqId}/close`);
+    return response.data;
+  },
+
+  /**
+   * Cancela um churrasco
+   * @swagger POST /api/bbq/{id}/cancel
+   */
+  cancelBBQ: async (bbqId: string) => {
+    const response = await api.post(`/bbq/${bbqId}/cancel`);
+    return response.data;
+  },
+
+  /**
+   * Adiciona um participante ao churrasco (usuário do banco de dados)
+   * @param bbqId ID do churrasco
+   * @param userId ID do usuário
+   * @param userName Nome do usuário
+   */
+  addParticipant: async (bbqId: string, userId: string, userName: string) => {
+    const response = await api.post(`/bbq/${bbqId}/participants`, {
+      userId,
+      userName,
+      invitedBy: null,
+    });
+    return response.data;
+  },
+
+  /**
+   * Adiciona um convidado ao churrasco
+   * @param bbqId ID do churrasco
+   * @param inviterId ID do convidador
+   * @param guestName Nome do convidado
+   */
+  addGuest: async (bbqId: string, inviterId: string, guestName: string) => {
+    const response = await api.post(`/bbq/${bbqId}/participants`, {
+      userId: `guest_${Date.now()}`,
+      userName: guestName,
+      invitedBy: inviterId,
+    });
+    return response.data;
+  },
+
+  /**
+   * Remove um participante do churrasco
+   * @param bbqId ID do churrasco
+   * @param userId ID do usuário/participante
+   */
+  removeParticipant: async (bbqId: string, userId: string) => {
+    const response = await api.delete(`/bbq/${bbqId}/participants/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Marca ou desmarca um participante como pago
+   * @param bbqId ID do churrasco
+   * @param userId ID do participante
+   * @param isPaid Status de pagamento
+   */
+  toggleParticipantPayment: async (bbqId: string, userId: string, isPaid: boolean) => {
+    const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/payment`, { isPaid });
+    return response.data;
+  },
+};
+
+
 
 export default api;

@@ -33,3 +33,16 @@ export function formatDate(
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString(locale, options);
 }
+
+/**
+ * Format an ISO date string (from API) showing exactly the date portion without timezone conversion
+ * 
+ * @param isoDateString - Date in ISO format (e.g., "2025-12-17T03:00:00.000Z")
+ * @param locale - Locale for formatting (default: 'pt-BR')
+ * @returns Formatted date string showing the exact date from API
+ */
+export function formatISODate(isoDateString: string, locale: string = 'pt-BR'): string {
+    // Extract YYYY-MM-DD from ISO string to show exact date from API
+    const dateOnly = isoDateString.split('T')[0];
+    return formatDateWithoutTimezone(dateOnly, locale);
+}
