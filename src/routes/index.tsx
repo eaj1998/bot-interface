@@ -11,26 +11,48 @@ import { ManageGames } from '../pages/ManageGames';
 import { GameDetail } from '../pages/GameDetail';
 import { ManagePlayers } from '../pages/ManagePlayers';
 import { PlayerDetail } from '../pages/PlayerDetail';
-import { ManageDebts } from '../pages/ManageDebts';
 import { ManageWorkspaces } from '../pages/ManageWorkspaces';
 import { WorkspaceDetail } from '../pages/WorkspaceDetail';
 import { ManageChats } from '../pages/ManageChats';
-import { AddCredit } from '../pages/AddCredit';
-import { AddDebit } from '../pages/AddDebit';
+import ManageMemberships from '../pages/ManageMemberships';
+import { WorkspaceSettings } from '../pages/WorkspaceSettings';
+import { AdminFinance } from '../pages/AdminFinance';
+import { ChatSettings } from '../pages/ChatSettings';
 
 import { UserDashboard } from '../pages/UserDashboard';
 import { UserProfile } from '../pages/UserProfile';
+import { BBQDemo } from '@/pages/BBQDemo';
+import { BBQDetails } from '@/pages/BBQDetails';
+import { SelectWorkspace } from '../pages/SelectWorkspace';
+import NoWorkspace from '../pages/NoWorkspace';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
   },
+  {
+    path: '/select-workspace',
+    element: (
+      <ProtectedRoute>
+        <SelectWorkspace />
+      </ProtectedRoute>
+    ),
+  },
+
+  {
+    path: '/no-workspace',
+    element: (
+      <ProtectedRoute>
+        <NoWorkspace />
+      </ProtectedRoute>
+    ),
+  },
 
   {
     path: '/admin',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <AppLayout role="admin" />
       </ProtectedRoute>
     ),
@@ -42,6 +64,14 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <AdminDashboard />,
+      },
+      {
+        path: 'bbq',
+        element: <BBQDemo />,
+      },
+      {
+        path: 'bbq/:bbqId',
+        element: <BBQDetails />,
       },
       {
         path: 'games',
@@ -60,10 +90,6 @@ export const router = createBrowserRouter([
         element: <PlayerDetail />,
       },
       {
-        path: 'debts',
-        element: <ManageDebts />,
-      },
-      {
         path: 'workspaces',
         element: <ManageWorkspaces />,
       },
@@ -76,12 +102,12 @@ export const router = createBrowserRouter([
         element: <ManageChats />,
       },
       {
-        path: 'add-credit',
-        element: <AddCredit />,
+        path: 'chats/:chatId',
+        element: <ChatSettings />,
       },
       {
-        path: 'add-debit',
-        element: <AddDebit />,
+        path: 'memberships',
+        element: <ManageMemberships />,
       },
       {
         path: 'my-dashboard',
@@ -91,13 +117,21 @@ export const router = createBrowserRouter([
         path: 'my-profile',
         element: <UserProfile />,
       },
+      {
+        path: 'finance',
+        element: <AdminFinance />,
+      },
+      {
+        path: 'settings',
+        element: <WorkspaceSettings />,
+      },
     ],
   },
 
   {
     path: '/user',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['user', 'admin']}>
         <AppLayout role="user" />
       </ProtectedRoute>
     ),

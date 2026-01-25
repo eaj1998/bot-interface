@@ -58,6 +58,10 @@ import {
   Moon,
   Sun,
   Target,
+  Flame,
+  UtensilsCrossed,
+  Wallet,
+  Slash,
 } from 'lucide-react';
 
 export const BFIcons = {
@@ -132,6 +136,10 @@ export const BFIcons = {
   Info,
   CreditCard,
   Target,
+  Flame,
+  UtensilsCrossed,
+  Wallet,
+  Slash,
 };
 
 export type BFIconName = keyof typeof BFIcons;
