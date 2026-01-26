@@ -12,6 +12,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { gamesAPI, playersAPI } from '../lib/axios';
+import { formatEventDate } from '../lib/dateUtils';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip';
@@ -294,11 +295,11 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
     return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (dateString: string): string => {
+  /* const formatDate = (dateString: string): string => {
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  };
+  }; */
 
   const formatPhone = (phone: string): string => {
     if (!phone) return '';
@@ -492,7 +493,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
             <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground flex-wrap text-xs sm:text-sm">
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                <span>{formatDate(gameInfo.date)}</span>
+                <span>{formatEventDate(gameInfo.date)}</span>
               </div>
               <span className="text-muted-foreground">•</span>
               <div className="flex items-center gap-1.5">

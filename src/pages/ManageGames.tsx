@@ -11,7 +11,7 @@ import { BFListView } from '../components/BFListView';
 import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { gamesAPI, chatsAPI, workspacesAPI } from '../lib/axios';
 import type { Game } from '../lib/types';
-import { formatDateWithoutTimezone } from '../lib/dateUtils';
+import { formatDateWithoutTimezone, formatEventTime } from '../lib/dateUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { BFAlertMessage } from '../components/BF-AlertMessage';
@@ -90,7 +90,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
         type: 'futebol' as const,
         location: game.location ?? 'A definir',
         date: game.date,
-        time: new Date(game.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
+        time: formatEventTime(game.date),
         maxPlayers: game.maxPlayers,
         currentPlayers: game.currentPlayers,
         pricePerPlayer: game.pricePerPlayer / 100,

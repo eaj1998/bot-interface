@@ -38,25 +38,37 @@ export function formatDate(
  * Format an ISO date string (from API) showing exactly the date portion without timezone conversion
  * 
  * @param isoDateString - Date in ISO format (e.g., "2025-12-17T03:00:00.000Z")
- * @param locale - Locale for formatting (default: 'pt-BR')
  * @returns Formatted date string showing the exact date from API
  */
-export function formatISODate(isoDateString: string, locale: string = 'pt-BR'): string {
-    // Extract YYYY-MM-DD from ISO string to show exact date from API
-    const dateOnly = isoDateString.split('T')[0];
-    return formatDateWithoutTimezone(dateOnly, locale);
+export function formatISODate(isoDateString: string): string {
+    if (!isoDateString) return '';
+    const date = new Date(isoDateString);
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 /**
- * Format a date string (ISO) to a localized date string respecting the timezone.
- * Useful for event timestamps where the stored time is UTC but should be displayed in local time.
+ * Format a date string (ISO) to a localized date string respecting the "Wall Time" stored in UTC.
+ * Does NOT convert to browser timezone.
  */
-export function formatEventDate(isoDateString: string, locale: string = 'pt-BR'): string {
+export function formatEventDate(isoDateString: string): string {
     if (!isoDateString) return '';
     const date = new Date(isoDateString);
-    return date.toLocaleDateString(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+
+    // Optional: Format time if needed using getUTCHours/Minutes
+
+    return `${day}/${month}/${year}`;
+}
+
+export function formatEventTime(isoDateString: string): string {
+    if (!isoDateString) return '';
+    const date = new Date(isoDateString);
+    const hh = String(date.getUTCHours()).padStart(2, '0');
+    const mm = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${hh}h${mm}`;
 }
