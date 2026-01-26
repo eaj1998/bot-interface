@@ -6,7 +6,7 @@ import { GameCard } from '../components/GameCard';
 
 import { useAuth } from '../hooks/useAuth';
 import { gamesAPI, transactionsAPI, membershipsAPI } from '../lib/axios';
-import { formatDateWithoutTimezone } from '../lib/dateUtils';
+import { formatDateWithoutTimezone, formatEventTime, formatEventDate } from '../lib/dateUtils';
 import { Membership, IFinancialBalance } from '../lib/types/membership';
 import { toast } from 'sonner';
 
@@ -93,8 +93,8 @@ export const UserDashboard: React.FC = () => {
           name: game.title || game.name,
           status: game.status === 'open' ? 'scheduled' : game.status,
           rawDate: game.date,
-          formattedDate: formatDateWithoutTimezone(game.date),
-          time: new Date(game.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
+          formattedDate: formatEventDate(game.date),
+          time: formatEventTime(game.date),
           location: game.location || 'A definir',
           pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
           currentPlayers: game.currentPlayers ?? 0,

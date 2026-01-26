@@ -3,7 +3,7 @@ import { BFIcons } from './BF-Icons';
 import { BFButton } from './BF-Button';
 import { MembershipStatus } from '../lib/types/membership';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { parseISO, isAfter, startOfDay } from 'date-fns';
+
 
 interface GameProps {
     id: string;
@@ -38,14 +38,33 @@ export const GameCard: React.FC<GameProps> = ({
 }) => {
     const isMember = membershipStatus === 'ACTIVE';
 
-    // Date Logic: Compare only dates (ignoring time)
-    // Assuming 'date' is YYYY-MM-DD. 
-    const gameDate = parseISO(date.split('T')[0]); // Ensure we get the date part
-    const today = startOfDay(new Date());
+    // Date Logic: Compare only dates using UTC components (Wall Time)
+    // 'date' is ISO string e.g. "2026-01-26T21:30:00.000Z"
 
-    // Future game means date > today
-    // If date is today, everyone can join.
-    const isFutureGame = isAfter(gameDate, today);
+    const gameDate = new Date(date);
+    const today = new Date(); // Current system time
+
+    // Normalize to UTC Wall Time for comparison
+    // We want to compare the game's Wall Date vs Today's Wall Date in SP (system locale)
+    // Actually simpler:
+    // If we want "isFutureGame", we usually mean "is the game date > today"? 
+    // But since we store "Wall Time" as UTC:
+    // Game: 26th (UTC date)
+    // Today: 26th (Local date)
+
+    const gameDayUTC = gameDate.getUTCDate();
+    const gameMonthUTC = gameDate.getUTCMonth();
+    const gameYearUTC = gameDate.getUTCFullYear();
+
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    // Compare YMD
+    const isFutureGame =
+        gameYearUTC > todayYear ||
+        (gameYearUTC === todayYear && gameMonthUTC > todayMonth) ||
+        (gameYearUTC === todayYear && gameMonthUTC === todayMonth && gameDayUTC > todayDay);
 
     const isLocked = isFutureGame && !isMember;
 

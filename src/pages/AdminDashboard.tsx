@@ -5,7 +5,7 @@ import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
 import { BFSelect } from '../components/BF-Select';
 import { api, workspacesAPI } from '../lib/axios';
-import { formatDateWithoutTimezone } from '../lib/dateUtils';
+import { formatEventDate, formatEventTime } from '../lib/dateUtils';
 import { toast } from 'sonner';
 
 interface DashboardStats {
@@ -123,13 +123,13 @@ export const AdminDashboard: React.FC = () => {
     return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (dateString: string): string => {
+  /* const formatDate = (dateString: string): string => {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       return formatDateWithoutTimezone(dateString).split('/').slice(0, 2).join('/');
     }
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  };
+  }; */
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: 'success' | 'warning' | 'error' | 'info', label: string }> = {
@@ -264,7 +264,7 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-[--muted-foreground] mb-1">Jogos Realizados</p>
               <h2 className="text-[--foreground]">{stats.totalGames}</h2>
               <p className="text-[--muted-foreground] mt-2 text-xs">
-                Próximo: {stats.nextGameDate ? formatDate(stats.nextGameDate) : 'Nenhum'}
+                Próximo: {stats.nextGameDate ? formatEventDate(stats.nextGameDate) : 'Nenhum'}
               </p>
             </div>
             <div className="bg-[--accent] p-3 rounded-lg">
@@ -296,7 +296,7 @@ export const AdminDashboard: React.FC = () => {
                     <div>
                       <p className="text-[--foreground]">{game.name}</p>
                       <p className="text-[--muted-foreground]">
-                        {formatDate(game.date)} às {game.time}
+                        {formatEventDate(game.date)} às {formatEventTime(game.date)}
                       </p>
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export const AdminDashboard: React.FC = () => {
                           {debt.description || debt.notes}
                         </p>
                       )}
-                      <p className="text-[--muted-foreground] text-sm">{formatDate(debt.createdAt)}</p>
+                      <p className="text-[--muted-foreground] text-sm">{formatEventDate(debt.createdAt)}</p>
                     </div>
                   </div>
                   <div className="text-right">
