@@ -324,7 +324,8 @@ const ManageMemberships = () => {
             ACTIVE: { label: 'Ativo', className: 'bg-green-100 text-green-800 border-green-200' },
             SUSPENDED: { label: 'Suspenso', className: 'bg-red-100 text-red-800 border-red-200' },
             PENDING: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-            INACTIVE: { label: 'Cancelado', className: 'bg-gray-100 text-gray-800 border-gray-200' },
+            CANCELED_SCHEDULED: { label: 'Cancelado', className: 'bg-red-100 text-red-800 border-red-200' },
+            INACTIVE: { label: 'Inativo', className: 'bg-gray-100 text-gray-800 border-gray-200' },
         };
 
         const variant = variants[status] || variants.PENDING;
