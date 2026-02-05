@@ -230,7 +230,7 @@ export default function App() {
           <div className="sticky top-0 z-10 bg-[var(--card)] border-b border-[var(--border)] px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h2 className="text-[var(--foreground)]">Bot Fut</h2>
+                <h2 className="text-[var(--foreground)]">Faz o Simples</h2>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {

@@ -1,5 +1,5 @@
 /**
- * Bot Fut - Exemplos de Uso dos Componentes de Login
+ * Faz o Simples - Exemplos de Uso dos Componentes de Login
  * 
  * Este arquivo contém exemplos práticos de como usar os componentes
  * de autenticação em diferentes cenários.

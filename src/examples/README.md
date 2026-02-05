@@ -1,4 +1,4 @@
-# 📚 Bot Fut - Exemplos de Login
+# 📚 Faz o Simples - Exemplos de Login
 
 Esta pasta contém exemplos práticos de uso dos componentes de autenticação.
 
@@ -62,7 +62,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-[var(--bf-navy)] to-[var(--bf-blue-primary)]">
       {/* Navegação */}
       <div className="bg-white border-b p-4">
-        <h1 className="text-center mb-4">Exemplos de Login - Bot Fut</h1>
+        <h1 className="text-center mb-4">Exemplos de Login - Faz o Simples</h1>
         <div className="flex flex-wrap gap-2 justify-center">
           {examplesList.map((example, index) => (
             <button
@@ -456,4 +456,4 @@ Tem um exemplo legal? Adicione aqui!
 
 **Happy coding!** 🚀⚽
 
-Bot Fut Design System v1.0.0
+Faz o Simples Design System v1.0.0

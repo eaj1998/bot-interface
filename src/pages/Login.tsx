@@ -254,7 +254,7 @@ export const Login: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl text-white mb-2">
-            Bem-vindo ao Bot Fut
+            Bem-vindo ao Faz o Simples
           </h1>
           <p className="text-blue-200">
             {step === 'phone'

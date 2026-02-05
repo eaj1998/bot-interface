@@ -1,8 +1,8 @@
-# 🎨 Bot Fut - Login Design Tokens & Specifications
+# 🎨 Faz o Simples - Login Design Tokens & Specifications
 
 ## 📋 Visão Geral
 
-Sistema de design completo para autenticação com telefone + OTP do Bot Fut.
+Sistema de design completo para autenticação com telefone + OTP do Faz o Simples.
 Design clean, esportivo e responsivo seguindo os padrões da marca.
 
 ---
@@ -671,6 +671,6 @@ Green 10%:       rgba(0, 214, 111, 0.1)
 
 ---
 
-**Criado por:** Bot Fut Design System  
+**Criado por:** Faz o Simples Design System  
 **Versão:** 1.0.0  
 **Data:** Novembro 2024

@@ -178,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
         <div>
           <h1 className="text-[--foreground] mb-2">Dashboard Administrativo</h1>
           <p className="text-[--muted-foreground]">
-            Visão geral do sistema Bot Fut
+            Visão geral do sistema Faz o Simples
           </p>
         </div>
         <div className="w-full sm:w-64">
