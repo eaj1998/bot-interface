@@ -27,6 +27,11 @@ export interface Player {
   createdAt?: string;
   updatedAt?: string;
   profilePicture?: string;
+  profile?: {
+    mainPosition: string;
+    rating: number;
+    dominantFoot: string;
+  };
 }
 
 export interface Game {

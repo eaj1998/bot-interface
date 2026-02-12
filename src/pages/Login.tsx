@@ -35,7 +35,6 @@ export const Login: React.FC = () => {
             return;
           }
 
-          // Check if workspace is selected
           const storedWorkspaceId = localStorage.getItem('workspaceId');
           if (!storedWorkspaceId && user.workspaces && user.workspaces.length > 1) {
             navigate('/select-workspace', { replace: true });

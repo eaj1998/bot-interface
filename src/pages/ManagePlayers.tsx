@@ -141,6 +141,7 @@ export const ManagePlayers: React.FC = () => {
       status: updatedData.status,
       isGoalie: updatedData.isGoalie,
       role: updatedData.role,
+      profile: updatedData.profile,
       workspaceId: workspaceId,
     });
     toast.success('Jogador atualizado com sucesso!');
