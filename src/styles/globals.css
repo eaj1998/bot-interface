@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Bot Fut Design Tokens */
+  /* Faz o Simples Design Tokens */
   --font-size: 16px;
 
   /* Brand Colors - Sporty & Modern */
@@ -128,7 +128,7 @@
 }
 
 .dark {
-  /* Dark mode theme for Bot Fut */
+  /* Dark mode theme for Faz o Simples */
   --background: #0A1628;
   --foreground: #F5F7FA;
   --card: #1A2B42;

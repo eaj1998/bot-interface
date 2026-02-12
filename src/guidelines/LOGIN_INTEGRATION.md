@@ -1,4 +1,4 @@
-# 🔐 Bot Fut - Guia de Integração de Autenticação
+# 🔐 Faz o Simples - Guia de Integração de Autenticação
 
 ## 📋 Visão Geral
 

@@ -1,4 +1,4 @@
-# Sistema de Autenticação - Bot Fut
+# Sistema de Autenticação - Faz o Simples
 
 ## Visão Geral
 

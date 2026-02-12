@@ -316,10 +316,25 @@ export const gamesAPI = {
   },
 
   /**
-   * Remove um jogador de um jogo
+   * Remove um jogador de um jogo (Legacy alias)
    */
   removePlayerFromGame: async (gameId: string, playerId: string) => {
-    const response = await api.delete(`/games/${gameId}/players/${playerId}`);
+    return gamesAPI.removePlayer(gameId, playerId);
+  },
+
+  /**
+   * Remove um jogador
+   */
+  removePlayer: async (gameId: string, userId: string) => {
+    const response = await api.post(`/games/${gameId}/remove-player`, { userId });
+    return response.data;
+  },
+
+  /**
+   * Remove um convidado de um jogo
+   */
+  removeGuest: async (gameId: string, slot: number) => {
+    const response = await api.post(`/games/${gameId}/remove-guest`, { slot });
     return response.data;
   },
 
@@ -614,6 +629,7 @@ export const playersAPI = {
     status?: 'active' | 'inactive' | 'all';
     page?: number;
     limit?: number;
+    workspaceId?: string;
   }) => {
     const queryParams: any = {
       page: params?.page || 1,
@@ -626,6 +642,10 @@ export const playersAPI = {
 
     if (params?.status && params.status !== 'all') {
       queryParams.status = params.status;
+    }
+
+    if (params?.workspaceId) {
+      queryParams.workspaceId = params.workspaceId;
     }
 
     const response = await api.get('/players', { params: queryParams });
@@ -878,6 +898,10 @@ export const membershipsAPI = {
     const response = await api.post(`/memberships/${id}/cancel`, { immediate, workspaceId });
     return response.data;
   },
+  processMonthlyBilling: async (workspaceId: string) => {
+    const response = await api.post('/memberships/admin/process-billing', { workspaceId });
+    return response.data;
+  },
 };
 
 /**
@@ -962,6 +986,16 @@ export const transactionsAPI = {
     const response = await api.post('/transactions', data);
     return response.data;
   },
+
+  update: async (id: string, data: any) => {
+    const response = await api.put(`/transactions/${id}`, data);
+    return response.data;
+  },
+
+  notifySingles: async (workspaceId: string) => {
+    const response = await api.post(`/transactions/${workspaceId}/notify-singles`);
+    return response.data;
+  }
 };
 
 

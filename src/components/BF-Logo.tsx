@@ -79,7 +79,7 @@ export const BFLogo: React.FC<BFLogoProps> = ({ size = 'md', variant = 'full', c
       </svg>
       <div className="flex flex-col" style={{ color: 'inherit' }}>
         <span className="font-bold leading-tight" style={{ fontSize: size === 'sm' ? '1rem' : size === 'md' ? '1.25rem' : '1.5rem', color: 'inherit' }}>
-          Bot Fut
+          Faz o Simples
         </span>
         <span className="leading-tight" style={{ fontSize: size === 'sm' ? '0.625rem' : size === 'md' ? '0.75rem' : '0.875rem', opacity: 0.8, color: 'inherit' }}>
           Gestão Inteligente
@@ -130,7 +130,7 @@ const sizes = {
     </svg>
     <div class="flex flex-col">
       <span class="font-bold text-[--foreground] leading-tight" :style="{ fontSize: sizes[size].titleSize }">
-        Bot Fut
+        Faz o Simples
       </span>
       <span class="text-[--muted-foreground] leading-tight" :style="{ fontSize: sizes[size].subtitleSize }">
         Gestão Inteligente

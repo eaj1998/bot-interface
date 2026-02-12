@@ -238,7 +238,7 @@ export default function AppLayout({ role }: AppLayoutProps) {
               </button>
 
               <div className="hidden sm:block">
-                <h2 className="text-base font-semibold text-[--foreground]">Bot Fut</h2>
+                <h2 className="text-base font-semibold text-[--foreground]">Faz o Simples</h2>
                 <p className="text-xs text-[--muted-foreground] leading-none">
                   {role === 'admin' ? 'Painel Administrativo' : 'Painel do Jogador'}
                 </p>
