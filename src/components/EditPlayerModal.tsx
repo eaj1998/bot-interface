@@ -15,6 +15,13 @@ const editPlayerSchema = z.object({
     position: z.enum(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'STRIKER']).optional(),
     status: z.enum(['active', 'inactive', 'suspended']),
     role: z.enum(['admin', 'user']).optional(),
+    // FairPlay Profile
+    mainPosition: z.enum(['GOL', 'ZAG', 'LAT', 'MEI', 'ATA']),
+    rating: z.union([z.string(), z.number()]).refine((val) => {
+        const n = Number(val);
+        return !isNaN(n) && n >= 0 && n <= 5;
+    }, { message: 'Nota deve ser entre 0 e 5' }),
+    dominantFoot: z.enum(['RIGHT', 'LEFT', 'BOTH']),
 });
 
 type EditPlayerFormData = z.infer<typeof editPlayerSchema>;
@@ -49,6 +56,9 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
             nick: '',
             status: 'active',
             role: 'user',
+            mainPosition: 'MEI',
+            rating: 3.0,
+            dominantFoot: 'RIGHT',
         }
     });
 
@@ -61,6 +71,9 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                 position: player.position as any,
                 status: player.status || 'active',
                 role: ((player.role as string)?.toLowerCase() === 'admin' ? 'admin' : 'user'),
+                mainPosition: (player.profile?.mainPosition as any) || 'MEI',
+                rating: player.profile?.rating ?? 3.0,
+                dominantFoot: (player.profile?.dominantFoot as any) || 'RIGHT',
             });
         }
     }, [player, reset]);
@@ -96,6 +109,12 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                 nick: data.nick,
                 status: data.status,
                 role: data.role,
+                profile: {
+                    ...player.profile, // Keep existing fields
+                    mainPosition: data.mainPosition,
+                    rating: Number(data.rating),
+                    dominantFoot: data.dominantFoot,
+                }
             });
             onClose();
         } catch (error) {
@@ -172,25 +191,82 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                         />
                     </div>
 
-                    {/* Posição */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Posição</label>
-                        <Select
-                            value={watch('position')}
-                            onValueChange={(value: any) => setValue('position', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione a posição" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="GOALKEEPER">Goleiro</SelectItem>
-                                <SelectItem value="DEFENDER">Zagueiro</SelectItem>
-                                <SelectItem value="MIDFIELDER">Meio-campo</SelectItem>
-                                <SelectItem value="STRIKER">Atacante</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {/* Perfil Técnico */}
+                    <div className="space-y-4 border-t pt-4">
+                        <h3 className="text-sm font-semibold">Perfil Técnico (FairPlay)</h3>
 
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Posição Principal */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Posição Principal</label>
+                                <Controller
+                                    name="mainPosition"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="GOL">Goleiro</SelectItem>
+                                                <SelectItem value="ZAG">Zagueiro</SelectItem>
+                                                <SelectItem value="LAT">Lateral</SelectItem>
+                                                <SelectItem value="MEI">Meio-Campo</SelectItem>
+                                                <SelectItem value="ATA">Atacante</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Pé Dominante */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Pé Dominante</label>
+                                <Controller
+                                    name="dominantFoot"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="RIGHT">Destro</SelectItem>
+                                                <SelectItem value="LEFT">Canhoto</SelectItem>
+                                                <SelectItem value="BOTH">Ambidestro</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Nota */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Nota Inicial (0-5)</label>
+                            <Controller
+                                name="rating"
+                                control={control}
+                                render={({ field }) => (
+                                    <BFInput
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="5"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        fullWidth
+                                    />
+                                )}
+                            />
+                        </div>
+                    </div>
                     {/* Status */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Status *</label>
@@ -232,7 +308,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                     <DialogFooter>
                         <BFButton
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                             onClick={onClose}
                             disabled={isSaving}
                         >

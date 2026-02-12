@@ -600,6 +600,7 @@ export const playersAPI = {
     isGoalie?: boolean;
     role?: 'admin' | 'user';
     workspaceId?: string;
+    profile?: any;
   }) => {
     const response = await api.put(`/players/${playerId}`, data);
     return response.data;
