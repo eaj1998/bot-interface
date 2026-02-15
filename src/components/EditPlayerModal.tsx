@@ -15,7 +15,6 @@ const editPlayerSchema = z.object({
     position: z.enum(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'STRIKER']).optional(),
     status: z.enum(['active', 'inactive', 'suspended']),
     role: z.enum(['admin', 'user']).optional(),
-    // FairPlay Profile
     mainPosition: z.enum(['GOL', 'ZAG', 'LAT', 'MEI', 'ATA']),
     rating: z.union([z.string(), z.number()]).refine((val) => {
         const n = Number(val);
