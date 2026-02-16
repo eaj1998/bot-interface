@@ -90,7 +90,7 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
 
                 <DialogFooter>
                     <BFButton
-                        variant="outline"
+                        variant="secondary"
                         onClick={onClose}
                         disabled={isLoading}
                     >

@@ -331,7 +331,7 @@ const ManageMemberships = () => {
         const variant = variants[status] || variants.PENDING;
 
         return (
-            <Badge variant="outline" className={variant.className}>
+            <Badge variant="secondary" className={variant.className}>
                 {variant.label}
             </Badge>
         );
@@ -879,7 +879,7 @@ const ManageMemberships = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => {
+                        <Button variant="secondary" onClick={() => {
                             setCreateDialogOpen(false);
                             setSelectedPlayer(null);
                             setCreateForm({ userId: '', planValue: 100, billingDay: 10 });

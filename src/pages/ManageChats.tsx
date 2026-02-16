@@ -148,7 +148,7 @@ export const ManageChats: React.FC = () => {
           <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-6">
             Para começar, use o comando <code>!bind</code> no grupo do WhatsApp ou adicione manualmente.
           </p>
-          <BFButton variant="outline" onClick={() => setShowBindModal(true)}>
+          <BFButton variant="secondary" onClick={() => setShowBindModal(true)}>
             Vincular Agora
           </BFButton>
         </div>

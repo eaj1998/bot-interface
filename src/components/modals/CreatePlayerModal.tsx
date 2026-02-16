@@ -185,7 +185,7 @@ export const CreatePlayerModal: React.FC<CreatePlayerModalProps> = ({
                     <DialogFooter>
                         <BFButton
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                             onClick={() => onOpenChange(false)}
                             disabled={isSubmitting}
                         >

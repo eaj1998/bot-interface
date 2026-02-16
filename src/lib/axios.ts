@@ -828,6 +828,14 @@ export const bbqAPI = {
   toggleParticipantPayment: async (bbqId: string, userId: string, isPaid: boolean) => {
     const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/payment`, { isPaid });
     return response.data;
+  },
+
+  /**
+   * Alterna status de isenção (Free)
+   */
+  toggleParticipantFree: async (bbqId: string, userId: string, isFree: boolean) => {
+    const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/free`, { isFree });
+    return response.data;
   }
 };
 

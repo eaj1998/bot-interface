@@ -191,7 +191,7 @@ export const AlertMessageVariantsExample = () => {
 
       <div className="mt-6">
         <BFButton
-          variant="outline"
+          variant="secondary"
           onClick={() => {
             setShowError(true);
             setShowSuccess(true);

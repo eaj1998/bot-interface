@@ -113,8 +113,8 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => onEdit?.(row)}
-                                disabled={isMembership}
-                                className={isMembership ? "opacity-50 cursor-not-allowed" : ""}
+                                disabled={isMembership && row.status !== 'OVERDUE'}
+                                className={isMembership && row.status !== 'OVERDUE' ? "opacity-50 cursor-not-allowed" : ""}
                                 title="Editar Transação"
                             >
                                 <Edit size={16} />
@@ -134,7 +134,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                     <DropdownMenuItem
                                         onClick={() => onEdit?.(row)}
-                                        disabled={isMembership}
+                                        disabled={isMembership && row.status !== 'OVERDUE'}
                                     >
                                         <Edit className="mr-2 h-4 w-4" />
                                         <span>Editar</span>

@@ -268,7 +268,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
         <div className="text-center">
           <h2 className="text-[--foreground]">Workspace não encontrado</h2>
           <div className="flex items-center gap-4 mb-6">
-            <BFButton variant="outline" onClick={() => onBack ? onBack() : navigate('/admin/workspaces')}>
+            <BFButton variant="secondary" onClick={() => onBack ? onBack() : navigate('/admin/workspaces')}>
               Voltar para Workspaces
             </BFButton>
           </div>

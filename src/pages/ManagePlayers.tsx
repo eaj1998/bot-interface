@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
@@ -10,39 +10,23 @@ import { playersAPI, workspacesAPI } from '../lib/axios';
 import type { Player } from '../lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { useDebounce } from '../hooks/useDebounce';
 
 export const ManagePlayers: React.FC = () => {
   const navigate = useNavigate();
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string>('');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0
-  });
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    withDebts: 0,
-    suspended: 0
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
   const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -76,43 +60,54 @@ export const ManagePlayers: React.FC = () => {
 
     try {
       setLoading(true);
+      // Fetch all players for client-side filtering
       const response = await playersAPI.getPlayers({
-        search: debouncedSearchTerm || undefined,
-        status: filterStatus as 'active' | 'inactive' | 'all',
-        page: pagination.page,
-        limit: pagination.limit,
         workspaceId: workspaceId,
+        limit: 1000, // Fetch a large batch to handle client-side filtering
+        page: 1
       });
 
-      setPlayers(response.players || []);
-      setPagination({
-        page: response.page || 1,
-        limit: response.limit || 10,
-        total: response.total || 0,
-        totalPages: response.totalPages || 0,
-      });
-
-      setStats({
-        total: response.total || 0,
-        active: response.activeCount || 0,
-        withDebts: response.withDebtsCount || 0,
-        suspended: response.inactiveCount || 0,
-      });
+      setAllPlayers(response.players || []);
     } catch (error: any) {
       console.error('Error fetching players:', error);
       toast.error(error.response?.data?.message || 'Erro ao carregar jogadores');
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, debouncedSearchTerm, filterStatus, pagination.page, pagination.limit]);
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchPlayers();
   }, [fetchPlayers]);
 
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
-  };
+  // Client-side filtering
+  const filteredPlayers = useMemo(() => {
+    return allPlayers.filter(player => {
+      const matchesSearch =
+        player.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (player.phone && player.phone.includes(debouncedSearchTerm)) || // basic check
+        (player.email && player.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+
+      const matchesStatus = filterStatus === 'all' || player.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [allPlayers, debouncedSearchTerm, filterStatus]);
+
+  // Pagination
+  const paginatedPlayers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredPlayers.slice(startIndex, startIndex + pageSize);
+  }, [filteredPlayers, currentPage]);
+
+  const totalPages = Math.ceil(filteredPlayers.length / pageSize);
+
+  const stats = useMemo(() => ({
+    total: allPlayers.length,
+    active: allPlayers.filter(p => p.status === 'active').length,
+    withDebts: allPlayers.filter(p => (p.totalDebt || 0) > 0).length,
+    suspended: allPlayers.filter(p => p.status === 'suspended' || p.status === 'inactive').length
+  }), [allPlayers]);
 
   const handleDeletePlayer = async () => {
     if (!playerToDelete) return;
@@ -294,7 +289,7 @@ export const ManagePlayers: React.FC = () => {
           ],
         }}
         columns={columns}
-        data={players}
+        data={paginatedPlayers}
         loading={loading}
         emptyState={{
           icon: <BFIcons.Users size={48} className="text-muted-foreground mb-3" />,
@@ -340,11 +335,11 @@ export const ManagePlayers: React.FC = () => {
           </div>
         )}
         pagination={{
-          page: pagination.page,
-          limit: pagination.limit,
-          total: pagination.total,
-          totalPages: pagination.totalPages,
-          onPageChange: handlePageChange,
+          page: currentPage,
+          limit: pageSize,
+          total: filteredPlayers.length,
+          totalPages: totalPages,
+          onPageChange: setCurrentPage,
         }}
         dataTest="manage-players"
       />
@@ -389,5 +384,3 @@ export const ManagePlayers: React.FC = () => {
     </>
   );
 };
-
-

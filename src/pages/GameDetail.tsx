@@ -148,6 +148,8 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
         await gamesAPI.removeGuest(gameId, playerToRemove.slot);
         toast.success(`🗑️ Convidado ${playerToRemove.name} removido!`);
       } else {
+        console.log('PlayerToRemove: ', playerToRemove);
+
         await gamesAPI.removePlayer(gameId, playerToRemove.id);
         toast.success(`🗑️ ${playerToRemove.name} removido do jogo!`);
       }
@@ -286,7 +288,6 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
       // Revert on error
       setGameInfo(prev => prev ? { ...prev, allowCasualsEarly: !checked } : null);
       toast.error(error.response?.data?.message || 'Erro ao atualizar permissão');
-      // fetchGameDetails(); // Optional: ensure sync
     }
   };
 
@@ -385,7 +386,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-muted-foreground">Jogo não encontrado</p>
-          <BFButton onClick={handleBack} variant="outline" className="mt-4">
+          <BFButton onClick={handleBack} variant="secondary" className="mt-4">
             Voltar
           </BFButton>
         </div>
@@ -637,6 +638,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                   <Switch
                     checked={gameInfo.allowCasualsEarly || false}
                     onCheckedChange={handleToggleAllowCasuals}
+                    disabled={gameInfo.status !== 'open'}
                   />
                 </div>
               </div>
@@ -1183,7 +1185,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
                             )}
                           </div>
                           <BFButton
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
                             onClick={() => setSelectedInviter(null)}
                             data-test="change-inviter-button"
