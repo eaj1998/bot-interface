@@ -6,21 +6,23 @@ import { BFListView } from '../components/BFListView';
 import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
 import { EditPlayerModal } from '../components/EditPlayerModal';
 import { CreatePlayerModal } from '../components/modals/CreatePlayerModal';
-import { playersAPI, workspacesAPI } from '../lib/axios';
+import { playersAPI } from '../lib/axios';
 import type { Player } from '../lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useDebounce } from '../hooks/useDebounce';
+import { useAuth } from '../hooks/useAuth';
 
 export const ManagePlayers: React.FC = () => {
   const navigate = useNavigate();
+  const { currentWorkspace } = useAuth();
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [workspaceId, setWorkspaceId] = useState<string>('');
+  // const [workspaceId, setWorkspaceId] = useState<string>(''); // Removed redundant state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
@@ -28,33 +30,12 @@ export const ManagePlayers: React.FC = () => {
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchWorkspace = async () => {
-      try {
-        console.log('[DEBUG] Fetching workspaces...');
-        const response = await workspacesAPI.getAllWorkspaces();
-        console.log('[DEBUG] Workspaces received:', response);
-        if (response.workspaces && response.workspaces.length > 0) {
-          // Get the most recent workspace
-          const mostRecent = response.workspaces.sort((a: any, b: any) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )[0];
-          console.log('[DEBUG] Setting workspaceId:', mostRecent.id);
-          setWorkspaceId(mostRecent.id);
-        } else {
-          console.log('[DEBUG] No workspaces found!');
-        }
-      } catch (error) {
-        console.error('[DEBUG] Error fetching workspace:', error);
-      }
-    };
-    fetchWorkspace();
-  }, []);
+  // Removed redundant fetchWorkspace useEffect
 
   const fetchPlayers = useCallback(async () => {
-    console.log('[DEBUG] fetchPlayers called, workspaceId:', workspaceId);
-    if (!workspaceId) {
-      console.log('[DEBUG] No workspaceId, returning early');
+    // console.log('[DEBUG] fetchPlayers called, workspaceId:', currentWorkspace?.id);
+    if (!currentWorkspace?.id) {
+      // console.log('[DEBUG] No workspaceId, returning early');
       return;
     }
 
@@ -62,7 +43,7 @@ export const ManagePlayers: React.FC = () => {
       setLoading(true);
       // Fetch all players for client-side filtering
       const response = await playersAPI.getPlayers({
-        workspaceId: workspaceId,
+        workspaceId: currentWorkspace.id,
         limit: 1000, // Fetch a large batch to handle client-side filtering
         page: 1
       });
@@ -74,7 +55,7 @@ export const ManagePlayers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
     fetchPlayers();
@@ -137,7 +118,7 @@ export const ManagePlayers: React.FC = () => {
       isGoalie: updatedData.isGoalie,
       role: updatedData.role,
       profile: updatedData.profile,
-      workspaceId: workspaceId,
+      workspaceId: currentWorkspace?.id,
     });
     toast.success('Jogador atualizado com sucesso!');
     setPlayerToEdit(null);
@@ -348,7 +329,7 @@ export const ManagePlayers: React.FC = () => {
       <CreatePlayerModal
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        workspaceId={workspaceId}
+        workspaceId={currentWorkspace?.id || ''}
         onSuccess={fetchPlayers}
       />
 
