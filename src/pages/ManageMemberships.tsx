@@ -7,13 +7,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Users, DollarSign, AlertTriangle, MoreVertical, Edit, Check, Ban, X, Loader2, Search as SearchIcon, WalletCards, Clock, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { membershipsAPI, workspacesAPI, playersAPI } from '@/lib/axios';
+import { membershipsAPI, playersAPI } from '@/lib/axios';
 import { useAuth } from '@/hooks/useAuth';
 import { formatEventDate } from '@/lib/dateUtils';
 
@@ -35,7 +36,7 @@ interface AdminMembershipListItem {
 
 
 const ManageMemberships = () => {
-    const { user } = useAuth();
+    const { currentWorkspace } = useAuth();
     const [loading, setLoading] = useState(true);
     const [memberships, setMemberships] = useState<AdminMembershipListItem[]>([]);
     const [summary, setSummary] = useState({ totalActive: 0, totalSuspended: 0, totalPending: 0, mrr: 0 });
@@ -76,37 +77,13 @@ const ManageMemberships = () => {
     const [searchingPlayers, setSearchingPlayers] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
 
-    const [activeWorkspaceId, setActiveWorkspaceId] = useState((user as any)?.activeWorkspaceId || '');
-    const [workspaces, setWorkspaces] = useState<any[]>([]);
-
-    useEffect(() => {
-        const init = async () => {
-            try {
-                const response = await workspacesAPI.getAllWorkspaces();
-                const workspacesList = response.workspaces || [];
-                setWorkspaces(workspacesList);
-
-                if (!activeWorkspaceId && workspacesList.length > 0) {
-                    const lastWorkspace = workspacesList[workspacesList.length - 1];
-                    setActiveWorkspaceId(lastWorkspace.id);
-                } else if (!activeWorkspaceId) {
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error('Failed to load workspaces', error);
-                setLoading(false);
-            }
-        };
-        init();
-    }, [user, activeWorkspaceId]);
-
     // Debounce main search
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (activeWorkspaceId) loadMemberships();
+            if (currentWorkspace?.id) loadMemberships();
         }, 500);
         return () => clearTimeout(timer);
-    }, [activeWorkspaceId, filter, page, search]);
+    }, [currentWorkspace?.id, filter, page, search]);
 
     // Debounce player search for autocomplete
     useEffect(() => {
@@ -142,7 +119,7 @@ const ManageMemberships = () => {
             variant: 'default',
             action: async () => {
                 try {
-                    const response = await membershipsAPI.processMonthlyBilling(activeWorkspaceId);
+                    const response = await membershipsAPI.processMonthlyBilling();
                     toast.success(response.message || 'Faturamento processado com sucesso!');
                     loadMemberships();
                 } catch (error: any) {
@@ -153,12 +130,11 @@ const ManageMemberships = () => {
     };
 
     const loadMemberships = async () => {
-        if (!activeWorkspaceId) return;
+        if (!currentWorkspace?.id) return;
 
         try {
             setLoading(true);
             const response = await membershipsAPI.getAdminList({
-                workspaceId: activeWorkspaceId,
                 page,
                 limit: 20,
                 filter,
@@ -190,11 +166,17 @@ const ManageMemberships = () => {
 
         try {
             setActionLoading(true);
-            await membershipsAPI.registerManualPayment(selectedMembership.id, {
-                ...paymentForm,
-                workspaceId: activeWorkspaceId
+            const response = await membershipsAPI.registerManualPayment(selectedMembership.id, {
+                ...paymentForm
             });
-            toast.success('✅ Pagamento registrado! Membership reativado.');
+
+            const updatedMembership = response.data?.membership || response.membership;
+            if (updatedMembership && updatedMembership.status === 'PENDING') {
+                toast.success('✅ Pagamento parcial registrado!');
+            } else {
+                toast.success('✅ Pagamento registrado! Membership reativado.');
+            }
+
             setPaymentDialogOpen(false);
             loadMemberships();
         } catch (error: any) {
@@ -226,7 +208,7 @@ const ManageMemberships = () => {
             variant: 'destructive',
             action: async () => {
                 try {
-                    await membershipsAPI.suspendMembershipAdmin(membership.id, 'Suspenso manualmente pelo admin', activeWorkspaceId);
+                    await membershipsAPI.suspendMembershipAdmin(membership.id, 'Suspenso manualmente pelo admin');
                     toast.success(`Assinatura de ${membership.user.name} foi suspensa.`);
                     loadMemberships();
                 } catch (error: any) {
@@ -244,7 +226,7 @@ const ManageMemberships = () => {
             variant: 'destructive',
             action: async () => {
                 try {
-                    await membershipsAPI.cancelMembershipAdmin(membership.id, true, activeWorkspaceId);
+                    await membershipsAPI.cancelMembershipAdmin(membership.id, true);
                     toast.error(`Assinatura de ${membership.user.name} cancelada.`);
                     loadMemberships();
                 } catch (error: any) {
@@ -255,9 +237,8 @@ const ManageMemberships = () => {
     };
 
     const handleOpenCreateDialog = () => {
-        const workspace = workspaces.find(w => w.id === activeWorkspaceId);
-        const defaultFee = workspace?.settings?.monthlyFeeCents
-            ? workspace.settings.monthlyFeeCents / 100
+        const defaultFee = currentWorkspace?.settings?.monthlyFeeCents
+            ? currentWorkspace.settings.monthlyFeeCents / 100
             : 100;
 
         setCreateForm(prev => ({ ...prev, planValue: defaultFee }));
@@ -273,7 +254,6 @@ const ManageMemberships = () => {
         try {
             setActionLoading(true);
             await membershipsAPI.createMembership({
-                workspaceId: activeWorkspaceId,
                 userId: createForm.userId,
                 planValue: createForm.planValue,
             });
@@ -306,8 +286,7 @@ const ManageMemberships = () => {
         try {
             setActionLoading(true);
             await membershipsAPI.updateMembership(selectedMembership.id, {
-                ...editForm,
-                workspaceId: activeWorkspaceId
+                ...editForm
             });
             toast.success('✅ Membership atualizado com sucesso!');
             setEditDialogOpen(false);
@@ -348,22 +327,6 @@ const ManageMemberships = () => {
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-                    <Select
-                        value={activeWorkspaceId}
-                        onValueChange={setActiveWorkspaceId}
-                    >
-                        <SelectTrigger className="w-full sm:w-[240px]">
-                            <SelectValue placeholder="Selecione o Workspace" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {workspaces.map((ws) => (
-                                <SelectItem key={ws.id} value={ws.id}>
-                                    {ws.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Button
                             variant="secondary"

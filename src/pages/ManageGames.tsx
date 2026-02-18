@@ -9,7 +9,7 @@ import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
 import { BFListView } from '../components/BFListView';
 import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
-import { gamesAPI, chatsAPI, workspacesAPI } from '../lib/axios';
+import { gamesAPI, chatsAPI } from '../lib/axios';
 import type { Game } from '../lib/types';
 import { formatDateWithoutTimezone, formatEventTime } from '../lib/dateUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
@@ -90,7 +90,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
         type: 'futebol' as const,
         location: game.location ?? 'A definir',
         date: game.date,
-        time: formatEventTime(game.date),
+        time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
         maxPlayers: game.maxPlayers,
         currentPlayers: game.currentPlayers,
         pricePerPlayer: game.pricePerPlayer / 100,
@@ -139,7 +139,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
 
     try {
       setDeletingGame(true);
-      await gamesAPI.deleteGame(gameToDelete, game.workspaceId);
+      await gamesAPI.deleteGame(gameToDelete);
       toast.success('🚫 Jogo cancelado com sucesso!');
       setGameToDelete(null);
       fetchGames();
@@ -159,7 +159,7 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
 
     try {
       setClosingGame(true);
-      await gamesAPI.closeGame(gameToClose, game.workspaceId);
+      await gamesAPI.closeGame(gameToClose);
       toast.success('✅ Jogo fechado com sucesso!');
       setGameToClose(null);
       fetchGames();
@@ -446,8 +446,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
     maxPlayers: '',
     pricePerPlayer: '',
     priceInCents: 0,
-    chatId: '',
-    workspaceId: ''
+    chatId: ''
   });
   const [chats, setChats] = React.useState<Array<{
     id: string;
@@ -460,34 +459,15 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
       weekday: number;
     }
   }>>([]);
-  const [workspaces, setWorkspaces] = React.useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = React.useState(false);
   const [loadingChats, setLoadingChats] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const fetchWorkspaces = async () => {
-      try {
-        const workspacesResponse = await workspacesAPI.getAllWorkspaces();
-        setWorkspaces(workspacesResponse.workspaces || []);
-      } catch (err) {
-        console.error('Error fetching workspaces:', err);
-        setError('Erro ao carregar workspaces');
-      }
-    };
-    fetchWorkspaces();
-  }, []);
-
-  React.useEffect(() => {
     const fetchChats = async () => {
-      if (!formData.workspaceId) {
-        setChats([]);
-        return;
-      }
-
       setLoadingChats(true);
       try {
-        const chatsResponse = await chatsAPI.getChatsByWorkspace(formData.workspaceId);
+        const chatsResponse = await chatsAPI.getChatsByWorkspace();
         setChats(chatsResponse.chats || []);
       } catch (err) {
         console.error('Error fetching chats:', err);
@@ -497,14 +477,11 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
       }
     };
     fetchChats();
-  }, [formData.workspaceId]);
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      if (field === 'workspaceId') {
-        newData.chatId = '';
-      }
       return newData;
     });
     setError(null);
@@ -566,8 +543,7 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         location: formData.location,
         maxPlayers: parseInt(formData.maxPlayers),
         pricePerPlayer: formData.priceInCents,
-        chatId: formData.chatId,
-        workspaceId: formData.workspaceId
+        chatId: formData.chatId
       });
 
       toast.success('🎉 Jogo agendado com sucesso!');
@@ -585,21 +561,14 @@ const CreateGameForm: React.FC<{ onClose: () => void; onSuccess: () => void }> =
         <BFAlertMessage variant="error" message={error} />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <BFSelect
-          label="Workspace"
-          options={workspaces.map(ws => ({ value: ws.id, label: ws.name }))}
-          value={formData.workspaceId}
-          onChange={(val) => handleChange('workspaceId', String(val))}
-          placeholder="Selecione o workspace"
-        />
+      <div className="grid grid-cols-1 gap-4">
         <BFSelect
           label="Chat"
           options={chats.map(chat => ({ value: chat.chatId, label: chat.name }))}
           value={formData.chatId}
           onChange={(val) => handleChatChange(String(val))}
-          placeholder={loadingChats ? 'Carregando chats...' : formData.workspaceId ? 'Selecione o chat' : 'Selecione o workspace primeiro'}
-          disabled={!formData.workspaceId || loadingChats}
+          placeholder={loadingChats ? 'Carregando chats...' : 'Selecione o chat (opcional)'}
+          disabled={loadingChats}
         />
       </div>
 

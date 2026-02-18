@@ -2,7 +2,7 @@ import React from 'react';
 
 export interface BFButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'loading'> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'icon' | 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   isLoading?: boolean;
   loading?: boolean;
@@ -48,6 +48,7 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
 
   const getSizeClasses = (size: string) => {
     switch (size) {
+      case 'icon': return 'h-8 w-8';
       case 'sm': return 'h-8 px-3 gap-1.5';
       case 'md': return 'h-10 px-4 gap-2';
       case 'lg': return 'h-12 px-6 gap-2.5';

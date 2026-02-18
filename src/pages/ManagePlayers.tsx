@@ -43,7 +43,6 @@ export const ManagePlayers: React.FC = () => {
       setLoading(true);
       // Fetch all players for client-side filtering
       const response = await playersAPI.getPlayers({
-        workspaceId: currentWorkspace.id,
         limit: 1000, // Fetch a large batch to handle client-side filtering
         page: 1
       });
@@ -118,7 +117,6 @@ export const ManagePlayers: React.FC = () => {
       isGoalie: updatedData.isGoalie,
       role: updatedData.role,
       profile: updatedData.profile,
-      workspaceId: currentWorkspace?.id,
     });
     toast.success('Jogador atualizado com sucesso!');
     setPlayerToEdit(null);

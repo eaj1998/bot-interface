@@ -53,7 +53,7 @@ export const UserDashboard: React.FC = () => {
         setLoading(true);
 
         try {
-          const membershipResponse = await membershipsAPI.getMyMembership(currentWorkspace.id);
+          const membershipResponse = await membershipsAPI.getMyMembership();
           const membershipData = membershipResponse.data || membershipResponse.membership;
 
           if (membershipData) {
@@ -71,7 +71,7 @@ export const UserDashboard: React.FC = () => {
         }
 
         try {
-          const balanceData = await transactionsAPI.getMyBalance(currentWorkspace.id);
+          const balanceData = await transactionsAPI.getMyBalance();
           setBalance(balanceData);
         } catch (err) {
           console.error('Error fetching balance', err);
@@ -94,7 +94,7 @@ export const UserDashboard: React.FC = () => {
           status: game.status === 'open' ? 'scheduled' : game.status,
           rawDate: game.date,
           formattedDate: formatEventDate(game.date),
-          time: formatEventTime(game.date),
+          time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
           location: game.location || 'A definir',
           pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
           currentPlayers: game.currentPlayers ?? 0,
@@ -125,10 +125,10 @@ export const UserDashboard: React.FC = () => {
     // Refresh balance and membership
     if (currentWorkspace?.id) {
       try {
-        const balanceData = await transactionsAPI.getMyBalance(currentWorkspace.id);
+        const balanceData = await transactionsAPI.getMyBalance();
         setBalance(balanceData);
 
-        const mResponse = await membershipsAPI.getMyMembership(currentWorkspace.id);
+        const mResponse = await membershipsAPI.getMyMembership();
         const mData = mResponse.data || mResponse.membership;
         if (mData) {
           setMembership({
@@ -172,7 +172,7 @@ export const UserDashboard: React.FC = () => {
         status: game.status === 'open' ? 'scheduled' : game.status,
         rawDate: game.date,
         formattedDate: formatDateWithoutTimezone(game.date),
-        time: game.time,
+        time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
         location: game.location || 'A definir',
         pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
         currentPlayers: game.currentPlayers ?? 0,
@@ -220,7 +220,7 @@ export const UserDashboard: React.FC = () => {
         status: game.status === 'open' ? 'scheduled' : game.status,
         rawDate: game.date,
         formattedDate: formatDateWithoutTimezone(game.date),
-        time: game.time,
+        time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
         location: game.location || 'A definir',
         pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
         currentPlayers: game.currentPlayers ?? 0,

@@ -96,6 +96,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         init();
     }, []);
 
+    useEffect(() => {
+        if (currentWorkspace) {
+            localStorage.setItem('workspaceId', currentWorkspace.id);
+        }
+    }, [currentWorkspace]);
+
     const signIn = async (phone: string, otp: string) => {
         const response = await authAPI.verifyOTP(phone, otp);
         const userData = response.user || (response.data?.user);

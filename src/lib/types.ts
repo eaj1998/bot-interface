@@ -191,6 +191,14 @@ export interface Chat {
   updatedAt: string;
   lastMessage?: string;
   lastMessageAt?: string;
+  settings?: {
+    allowGuests?: boolean;
+  };
+  financials?: {
+    defaultPriceCents?: number;
+    pixKey?: string;
+    acceptsCash?: boolean;
+  };
 }
 
 // BBQ Types
