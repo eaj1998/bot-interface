@@ -127,7 +127,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
 
     try {
       setClosingGame(true);
-      await gamesAPI.closeGame(gameToClose, gameInfo.workspaceId);
+      await gamesAPI.closeGame(gameToClose);
       toast.success('✅ Jogo fechado com sucesso!');
       setGameToClose(null);
       fetchGameDetails();
@@ -168,7 +168,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
 
     try {
       setCancelingGame(true);
-      await gamesAPI.deleteGame(gameToCancel, gameInfo.workspaceId);
+      await gamesAPI.deleteGame(gameToCancel);
       toast.success('🚫 Jogo cancelado com sucesso!');
       setGameToCancel(null);
       navigate('/admin/games');

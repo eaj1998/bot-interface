@@ -4,16 +4,6 @@ import { BFSidebar, BFSidebarItem } from '../components/BF-Sidebar';
 import { BFIcons } from '../components/BF-Icons';
 import { useAuth } from '../hooks/useAuth';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, Check } from 'lucide-react';
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -34,7 +24,7 @@ export default function AppLayout() {
   }, []);
 
   // NEW: Workspace Protection & Redirection
-  const { currentWorkspace, workspaces, loading, selectWorkspace } = useAuth();
+  const { currentWorkspace, workspaces, loading } = useAuth();
 
   // Derive role dynamically
   const userRole = currentWorkspace?.role?.toLowerCase() || 'user';

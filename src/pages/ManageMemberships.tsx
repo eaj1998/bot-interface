@@ -130,8 +130,6 @@ const ManageMemberships = () => {
     };
 
     const loadMemberships = async () => {
-        if (!currentWorkspace?.id) return;
-
         try {
             setLoading(true);
             const response = await membershipsAPI.getAdminList({

@@ -40,6 +40,7 @@ export const ManageChats: React.FC = () => {
   const fetchChats = async () => {
     try {
       setLoading(true);
+
       const data = await chatsAPI.getChatsByWorkspace();
       // Ensure compatibility if API returns object with data property or array directly
       const list = Array.isArray(data) ? data : (data.chats || []);

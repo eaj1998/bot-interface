@@ -4,7 +4,6 @@ import { useAuth } from '../hooks/useAuth';
 import { BFCard, BFCardHeader, BFCardContent } from '../components/BF-Card';
 import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
-import { BFSelect } from '../components/BF-Select';
 import { api } from '../lib/axios';
 import { formatEventDate, formatEventTime } from '../lib/dateUtils';
 import { toast } from 'sonner';
@@ -50,11 +49,10 @@ interface DashboardData {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { workspaces, currentWorkspace } = useAuth();
+  const { currentWorkspace } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -62,10 +60,8 @@ export const AdminDashboard: React.FC = () => {
     const init = async () => {
       try {
         // Use workspaces from context
-        const initialWorkspace = currentWorkspace?.slug || 'all';
         const workspaceId = currentWorkspace?.id || null;
 
-        setSelectedWorkspace(initialWorkspace);
 
         const url = workspaceId ? `/dashboard/${workspaceId}` : '/dashboard';
         const response = await api.get(url, { signal: abortController.signal });
@@ -90,27 +86,6 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [currentWorkspace]);
 
-  const fetchDashboardData = async (workspace: string) => {
-    try {
-      setLoading(true);
-
-      let url = '/dashboard';
-      if (workspace !== 'all') {
-        const foundWorkspace = workspaces.find((ws: any) => ws.slug === workspace);
-        if (foundWorkspace) {
-          url = `/dashboard/${foundWorkspace.id}`;
-        }
-      }
-
-      const response = await api.get(url);
-      setDashboardData(response.data);
-    } catch (error: any) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Erro ao carregar dados do dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatMoney = (cents: number): string => {
     return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;

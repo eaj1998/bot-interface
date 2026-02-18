@@ -451,7 +451,6 @@ export const chatsAPI = {
         autoCreateDaysBefore?: number;
         requirePaymentProof?: boolean;
       };
-
       financials?: {
         defaultPriceCents?: number;
         pixKey?: string;
@@ -474,7 +473,7 @@ export const chatsAPI = {
    */
   getChatsByWorkspace: async () => {
     const response = await api.get('/chats');
-    return response.data.chats;
+    return response.data;
   },
   /**
    * Ativa um chat
@@ -553,8 +552,9 @@ export const workspacesAPI = {
   /**
    * Busca chats de um workspace
    */
-  getWorkspaceChats: async () => {
-    const response = await api.get(`/workspaces/chats`);
+  getWorkspaceChats: async (workspaceId: string) => {
+    const endpoint = workspaceId ? `/workspaces/${workspaceId}/chats` : '/chats';
+    const response = await api.get(endpoint);
     return response.data;
   },
 
@@ -596,6 +596,7 @@ export const playersAPI = {
     position?: 'GOALKEEPER' | 'DEFENDER' | 'MIDFIELDER' | 'STRIKER';
     type: 'MENSALISTA' | 'AVULSO';
     stars?: number;
+    workspaceId: string;
   }) => {
     const response = await api.post('/players', data);
     return response.data;
@@ -611,7 +612,6 @@ export const playersAPI = {
     status?: 'active' | 'inactive' | 'suspended';
     isGoalie?: boolean;
     role?: 'admin' | 'user';
-    workspaceId?: string;
     profile?: any;
   }) => {
     const response = await api.put(`/players/${playerId}`, data);
@@ -694,6 +694,7 @@ export const playersAPI = {
    * Adiciona crédito ao jogador
    */
   addCredit: async (playerId: string, data: {
+    workspaceId: string;
     amountCents: number;
     note?: string;
     method?: string;
@@ -739,9 +740,7 @@ export const bbqAPI = {
    * @swagger GET /api/bbq/stats
    */
   getStats: async () => {
-    const params: any = {};
-
-    const response = await api.get('/bbq/stats', { params });
+    const response = await api.get('/bbq/stats');
     return response.data.data || response.data;
   },
 
@@ -819,12 +818,14 @@ export const bbqAPI = {
   },
 
   /**
-   * Alterna status de isenção (Free)
+   * Alterna se participante é isento
    */
   toggleParticipantFree: async (bbqId: string, userId: string, isFree: boolean) => {
     const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/free`, { isFree });
     return response.data;
-  }
+  },
+
+
 };
 
 
@@ -876,11 +877,11 @@ export const membershipsAPI = {
     const response = await api.get('/memberships/admin/list', { params });
     return response.data;
   },
-  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number }) => {
+  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number; }) => {
     const response = await api.put(`/memberships/${id}`, data);
     return response.data;
   },
-  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string }) => {
+  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string; }) => {
     const response = await api.post(`/memberships/${id}/manual-payment`, data);
     return response.data;
   },
@@ -923,9 +924,7 @@ export const transactionsAPI = {
    * Busca o saldo financeiro do usuário
    */
   getMyBalance: async () => {
-    const params: any = {};
-
-    const response = await api.get('/transactions/balance', { params });
+    const response = await api.get('/transactions/balance');
     return response.data;
   },
 
@@ -949,6 +948,7 @@ export const transactionsAPI = {
   },
 
   getAll: async (params: {
+    workspaceId: string;
     page?: number;
     limit?: number;
     type?: 'INCOME' | 'EXPENSE';
@@ -960,15 +960,18 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  getStats: async () => {
-    const response = await api.get('/transactions/stats');
+  getStats: async (workspaceId: string) => {
+    const response = await api.get('/transactions/stats', {
+      params: { workspaceId }
+    });
     return response.data;
   },
 
-  getChartData: async (days?: number) => {
-    const response = await api.get('/transactions/chart', {
-      params: { days }
-    });
+  getChartData: async (workspaceId: string, days?: number,) => {
+    const params: any = {};
+    if (days) params.days = days;
+    if (workspaceId) params.workspaceId = workspaceId;
+    const response = await api.get('/transactions/chart', { params });
     return response.data;
   },
 
@@ -982,8 +985,9 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  notifySingles: async () => {
-    const response = await api.post(`/transactions/notify-singles`);
+  notifySingles: async (workspaceId: string) => {
+    const endpoint = workspaceId ? `/transactions/${workspaceId}/notify-singles` : '/transactions/notify-singles';
+    const response = await api.post(endpoint);
     return response.data;
   }
 };
