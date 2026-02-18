@@ -97,7 +97,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
 
                 <DialogFooter className="flex-col sm:flex-row gap-2">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    <Button variant="secondary" onClick={() => onOpenChange(false)}>
                         Fechar
                     </Button>
                     <Button

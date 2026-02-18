@@ -17,7 +17,6 @@ import { ManageChats } from '../pages/ManageChats';
 import ManageMemberships from '../pages/ManageMemberships';
 import { WorkspaceSettings } from '../pages/WorkspaceSettings';
 import { AdminFinance } from '../pages/AdminFinance';
-import { ChatSettings } from '../pages/ChatSettings';
 
 import { UserDashboard } from '../pages/UserDashboard';
 import { UserProfile } from '../pages/UserProfile';
@@ -59,7 +58,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <ProtectedRoute allowedRoles={['admin']}>
-        <AppLayout role="admin" />
+        <AppLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -108,10 +107,6 @@ export const router = createBrowserRouter([
         element: <ManageChats />,
       },
       {
-        path: 'chats/:chatId',
-        element: <ChatSettings />,
-      },
-      {
         path: 'memberships',
         element: <ManageMemberships />,
       },
@@ -138,7 +133,7 @@ export const router = createBrowserRouter([
     path: '/user',
     element: (
       <ProtectedRoute allowedRoles={['user', 'admin']}>
-        <AppLayout role="user" />
+        <AppLayout />
       </ProtectedRoute>
     ),
     children: [

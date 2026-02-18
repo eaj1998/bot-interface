@@ -246,6 +246,33 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
         }
     };
 
+    const handleToggleFree = async (userId: string, currentIsFree: boolean) => {
+        if (!bbqId) return;
+
+        // Optimistic update
+        if (bbq) {
+            const updatedParticipants = bbq.participants.map(p =>
+                p.userId === userId ? { ...p, isFree: !currentIsFree } : p
+            );
+            setBbq({ ...bbq, participants: updatedParticipants });
+        }
+
+        try {
+            await bbqAPI.toggleParticipantFree(bbqId, userId, !currentIsFree);
+            toast.success(currentIsFree ? 'Participante não é mais isento' : 'Participante marcado como isento');
+            await fetchBBQ(); // Fetch to ensure sync
+        } catch (error: any) {
+            // Revert optimistic update on error
+            if (bbq) {
+                const revertedParticipants = bbq.participants.map(p =>
+                    p.userId === userId ? { ...p, isFree: currentIsFree } : p
+                );
+                setBbq({ ...bbq, participants: revertedParticipants });
+            }
+            toast.error(error.response?.data?.message || 'Erro ao atualizar isenção');
+        }
+    };
+
     // Effect for search debounce
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -272,27 +299,56 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
             key: 'userName',
             label: 'Participante',
             render: (_: any, row: BBQParticipant) => (
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold">
-                        {row.userName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <p className="text-[--foreground] font-medium">{row.userName}</p>
-                            {row.isFree && (
-                                <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full border border-green-200 uppercase font-bold tracking-wide">
-                                    Grátis
-                                </span>
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold">
+                            {row.userName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <p className={`text-[--foreground] font-medium ${row.isFree ? 'line-through opacity-70' : ''}`}>{row.userName}</p>
+                                {row.isFree && (
+                                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full border border-green-200 uppercase font-bold tracking-wide">
+                                        Isento
+                                    </span>
+                                )}
+                            </div>
+                            {row.invitedBy && row.invitedByName && (
+                                <p className="text-[--muted-foreground] text-xs mt-0.5">
+                                    Convidado por {row.invitedByName}
+                                </p>
                             )}
                         </div>
-                        {row.invitedBy && row.invitedByName && (
-                            <p className="text-[--muted-foreground] text-xs mt-0.5">
-                                Convidado por {row.invitedByName}
-                            </p>
-                        )}
                     </div>
                 </div>
             ),
+        },
+        {
+            key: 'actions',
+            label: 'Ações',
+            render: (_: any, row: BBQParticipant) => (
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 mr-2">
+                        <button
+                            onClick={() => handleToggleFree(row.userId, !!row.isFree)}
+                            className={`
+                                relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]
+                                ${row.isFree ? 'bg-[var(--primary)]' : 'bg-gray-200'}
+                            `}
+                            title={row.isFree ? "Remover isenção" : "Marcar como isento"}
+                        >
+                            <span className="sr-only">Toggle Isento</span>
+                            <span
+                                className={`
+                                    inline-block h-3 w-3 transform rounded-full bg-white transition-transform
+                                    ${row.isFree ? 'translate-x-5' : 'translate-x-1'}
+                                `}
+                            />
+                        </button>
+                        <span className="text-xs text-[--muted-foreground]">Isento</span>
+                    </div>
+                </div>
+            )
         }
     ];
 

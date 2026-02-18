@@ -4,11 +4,18 @@ import { BFSidebar, BFSidebarItem } from '../components/BF-Sidebar';
 import { BFIcons } from '../components/BF-Icons';
 import { useAuth } from '../hooks/useAuth';
 
-interface AppLayoutProps {
-  role: 'admin' | 'user';
-}
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, Check } from 'lucide-react';
 
-export default function AppLayout({ role }: AppLayoutProps) {
+export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -26,8 +33,13 @@ export default function AppLayout({ role }: AppLayoutProps) {
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
 
-  // NEW: Workspace Protection
-  const { currentWorkspace, workspaces, loading } = useAuth(); // Assuming useAuth exposes these
+  // NEW: Workspace Protection & Redirection
+  const { currentWorkspace, workspaces, loading, selectWorkspace } = useAuth();
+
+  // Derive role dynamically
+  const userRole = currentWorkspace?.role?.toLowerCase() || 'user';
+  const role = (userRole === 'admin' || userRole === 'owner') ? 'admin' : 'user';
+
   useEffect(() => {
     if (!loading && !currentWorkspace) {
       // If loaded and no workspace selected, force selection
@@ -38,6 +50,30 @@ export default function AppLayout({ role }: AppLayoutProps) {
       }
     }
   }, [currentWorkspace, loading, workspaces, navigate]);
+
+  // Redirect on role mismatch/change
+  // Redirect on role mismatch/change
+  useEffect(() => {
+    if (!loading && currentWorkspace) {
+      // Use the role from the current workspace directly
+      const userRole = currentWorkspace.role?.toLowerCase() || 'user';
+      const isAdmin = userRole === 'admin' || userRole === 'owner';
+      const currentPath = location.pathname;
+
+      // Prevent infinite loops by checking verify logic only when needed
+      if (isAdmin) {
+        // If admin tries to access user dashboard, redirect to admin dashboard
+        if (currentPath === '/user/dashboard' || currentPath === '/') {
+          navigate('/admin/dashboard');
+        }
+      } else {
+        // If user tries to access admin routes, redirect to user dashboard
+        if (currentPath.startsWith('/admin')) {
+          navigate('/user/dashboard');
+        }
+      }
+    }
+  }, [currentWorkspace, loading, navigate, location.pathname]);
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -239,9 +275,6 @@ export default function AppLayout({ role }: AppLayoutProps) {
 
               <div className="hidden sm:block">
                 <h2 className="text-base font-semibold text-[--foreground]">Faz o Simples</h2>
-                <p className="text-xs text-[--muted-foreground] leading-none">
-                  {role === 'admin' ? 'Painel Administrativo' : 'Painel do Jogador'}
-                </p>
               </div>
             </div>
 

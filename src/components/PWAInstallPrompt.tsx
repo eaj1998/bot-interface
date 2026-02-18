@@ -68,7 +68,7 @@ export const PWAInstallPrompt: React.FC = () => {
                                 Instalar
                             </BFButton>
                             <BFButton
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={handleDismiss}
                                 icon={<X className="w-4 h-4" />}

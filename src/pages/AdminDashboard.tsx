@@ -174,23 +174,6 @@ export const AdminDashboard: React.FC = () => {
             Visão geral do sistema Faz o Simples
           </p>
         </div>
-        <div className="w-full sm:w-64">
-          <BFSelect
-            label="Workspace"
-            value={selectedWorkspace}
-            onChange={(value) => {
-              const newWorkspace = String(value);
-              setSelectedWorkspace(newWorkspace);
-              fetchDashboardData(newWorkspace);
-            }}
-            options={[
-              { value: 'all', label: 'Todos os Workspaces' },
-              ...(Array.isArray(workspaces) ? workspaces.map(ws => ({ value: ws.slug, label: ws.name })) : [])
-            ]}
-            placeholder="Selecione o workspace"
-            data-test="workspace-select"
-          />
-        </div>
       </div>
 
       {/* Stats Grid */}
@@ -289,7 +272,7 @@ export const AdminDashboard: React.FC = () => {
                     <div>
                       <p className="text-[--foreground]">{game.name}</p>
                       <p className="text-[--muted-foreground]">
-                        {formatEventDate(game.date)} às {formatEventTime(game.date)}
+                        {formatEventDate(game.date)} às {game.time ? game.time.replace(':', 'h') : formatEventTime(game.date)}
                       </p>
                     </div>
                   </div>

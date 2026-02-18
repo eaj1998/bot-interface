@@ -277,7 +277,6 @@ export const gamesAPI = {
     maxPlayers: number;
     pricePerPlayer: number;
     chatId: string;
-    workspaceId: string;
   }) => {
     const response = await api.post('/games', data);
     return response.data;
@@ -294,8 +293,8 @@ export const gamesAPI = {
   /**
    * Cancela/deleta um jogo
    */
-  deleteGame: async (gameId: string, workspaceId: string) => {
-    const response = await api.delete(`/games/${gameId}`, { data: { workspaceId } });
+  deleteGame: async (gameId: string) => {
+    const response = await api.delete(`/games/${gameId}`);
     return response.data;
   },
 
@@ -310,8 +309,8 @@ export const gamesAPI = {
   /**
    * Fecha um jogo
    */
-  closeGame: async (gameId: string, workspaceId: string) => {
-    const response = await api.post(`/games/${gameId}/close`, { workspaceId });
+  closeGame: async (gameId: string) => {
+    const response = await api.post(`/games/${gameId}/close`);
     return response.data;
   },
 
@@ -452,6 +451,7 @@ export const chatsAPI = {
         autoCreateDaysBefore?: number;
         requirePaymentProof?: boolean;
       };
+
       financials?: {
         defaultPriceCents?: number;
         pixKey?: string;
@@ -472,11 +472,9 @@ export const chatsAPI = {
   /**
    * Busca chats por workspace
    */
-  getChatsByWorkspace: async (workspaceId: string) => {
-    const response = await api.get('/chats', {
-      params: { workspaceId }
-    });
-    return response.data;
+  getChatsByWorkspace: async () => {
+    const response = await api.get('/chats');
+    return response.data.chats;
   },
   /**
    * Ativa um chat
@@ -555,8 +553,8 @@ export const workspacesAPI = {
   /**
    * Busca chats de um workspace
    */
-  getWorkspaceChats: async (workspaceId: string) => {
-    const response = await api.get(`/workspaces/${workspaceId}/chats`);
+  getWorkspaceChats: async () => {
+    const response = await api.get(`/workspaces/chats`);
     return response.data;
   },
 
@@ -598,7 +596,6 @@ export const playersAPI = {
     position?: 'GOALKEEPER' | 'DEFENDER' | 'MIDFIELDER' | 'STRIKER';
     type: 'MENSALISTA' | 'AVULSO';
     stars?: number;
-    workspaceId: string;
   }) => {
     const response = await api.post('/players', data);
     return response.data;
@@ -629,7 +626,6 @@ export const playersAPI = {
     status?: 'active' | 'inactive' | 'all';
     page?: number;
     limit?: number;
-    workspaceId?: string;
   }) => {
     const queryParams: any = {
       page: params?.page || 1,
@@ -642,10 +638,6 @@ export const playersAPI = {
 
     if (params?.status && params.status !== 'all') {
       queryParams.status = params.status;
-    }
-
-    if (params?.workspaceId) {
-      queryParams.workspaceId = params.workspaceId;
     }
 
     const response = await api.get('/players', { params: queryParams });
@@ -702,7 +694,6 @@ export const playersAPI = {
    * Adiciona crédito ao jogador
    */
   addCredit: async (playerId: string, data: {
-    workspaceId: string;
     amountCents: number;
     note?: string;
     method?: string;
@@ -724,7 +715,6 @@ export const bbqAPI = {
   getAllBBQs: async (filters?: {
     status?: 'open' | 'closed' | 'finished' | 'cancelled';
     chatId?: string;
-    workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
     page?: number;
@@ -737,7 +727,6 @@ export const bbqAPI = {
 
     if (filters?.status) params.status = filters.status;
     if (filters?.chatId) params.chatId = filters.chatId;
-    if (filters?.workspaceId) params.workspaceId = filters.workspaceId;
     if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
     if (filters?.dateTo) params.dateTo = filters.dateTo;
 
@@ -749,9 +738,8 @@ export const bbqAPI = {
    * Obtém estatísticas de churrascos
    * @swagger GET /api/bbq/stats
    */
-  getStats: async (workspaceId?: string) => {
+  getStats: async () => {
     const params: any = {};
-    if (workspaceId) params.workspaceId = workspaceId;
 
     const response = await api.get('/bbq/stats', { params });
     return response.data.data || response.data;
@@ -828,6 +816,14 @@ export const bbqAPI = {
   toggleParticipantPayment: async (bbqId: string, userId: string, isPaid: boolean) => {
     const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/payment`, { isPaid });
     return response.data;
+  },
+
+  /**
+   * Alterna status de isenção (Free)
+   */
+  toggleParticipantFree: async (bbqId: string, userId: string, isFree: boolean) => {
+    const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/free`, { isFree });
+    return response.data;
   }
 };
 
@@ -839,10 +835,8 @@ export const membershipsAPI = {
   /**
    * Busca a assinatura do usuário autenticado
    */
-  getMyMembership: async (workspaceId: string) => {
-    const response = await api.get(`/memberships/my`, {
-      params: { workspaceId }
-    });
+  getMyMembership: async () => {
+    const response = await api.get(`/memberships/my`);
     return response.data;
   },
 
@@ -850,7 +844,7 @@ export const membershipsAPI = {
    * Cria uma nova assinatura
    */
 
-  createMembership: async (data: { workspaceId: string; userId: string; planValue: number }) => {
+  createMembership: async (data: { userId: string; planValue: number }) => {
     const response = await api.post('/memberships/admin/create', data);
     return response.data;
   },
@@ -878,28 +872,28 @@ export const membershipsAPI = {
     const response = await api.patch(`/memberships/${membershipId}/reactivate`, { notes });
     return response.data;
   },
-  getAdminList: async (params: { workspaceId: string; page?: number; limit?: number; filter?: string; search?: string }) => {
+  getAdminList: async (params: { page?: number; limit?: number; filter?: string; search?: string }) => {
     const response = await api.get('/memberships/admin/list', { params });
     return response.data;
   },
-  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number; workspaceId?: string }) => {
+  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number }) => {
     const response = await api.put(`/memberships/${id}`, data);
     return response.data;
   },
-  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string; workspaceId?: string }) => {
+  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string }) => {
     const response = await api.post(`/memberships/${id}/manual-payment`, data);
     return response.data;
   },
-  suspendMembershipAdmin: async (id: string, reason: string, workspaceId: string) => {
-    const response = await api.post(`/memberships/${id}/suspend`, { reason, workspaceId });
+  suspendMembershipAdmin: async (id: string, reason: string) => {
+    const response = await api.post(`/memberships/${id}/suspend`, { reason });
     return response.data;
   },
-  cancelMembershipAdmin: async (id: string, immediate: boolean, workspaceId: string) => {
-    const response = await api.post(`/memberships/${id}/cancel`, { immediate, workspaceId });
+  cancelMembershipAdmin: async (id: string, immediate: boolean) => {
+    const response = await api.post(`/memberships/${id}/cancel`, { immediate });
     return response.data;
   },
-  processMonthlyBilling: async (workspaceId: string) => {
-    const response = await api.post('/memberships/admin/process-billing', { workspaceId });
+  processMonthlyBilling: async () => {
+    const response = await api.post('/memberships/admin/process-billing');
     return response.data;
   },
 };
@@ -928,9 +922,8 @@ export const transactionsAPI = {
   /**
    * Busca o saldo financeiro do usuário
    */
-  getMyBalance: async (workspaceId?: string) => {
+  getMyBalance: async () => {
     const params: any = {};
-    if (workspaceId) params.workspaceId = workspaceId;
 
     const response = await api.get('/transactions/balance', { params });
     return response.data;
@@ -956,7 +949,6 @@ export const transactionsAPI = {
   },
 
   getAll: async (params: {
-    workspaceId: string;
     page?: number;
     limit?: number;
     type?: 'INCOME' | 'EXPENSE';
@@ -968,16 +960,14 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  getStats: async (workspaceId: string) => {
-    const response = await api.get('/transactions/stats', {
-      params: { workspaceId }
-    });
+  getStats: async () => {
+    const response = await api.get('/transactions/stats');
     return response.data;
   },
 
-  getChartData: async (workspaceId: string, days?: number) => {
+  getChartData: async (days?: number) => {
     const response = await api.get('/transactions/chart', {
-      params: { workspaceId, days }
+      params: { days }
     });
     return response.data;
   },
@@ -992,8 +982,8 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  notifySingles: async (workspaceId: string) => {
-    const response = await api.post(`/transactions/${workspaceId}/notify-singles`);
+  notifySingles: async () => {
+    const response = await api.post(`/transactions/notify-singles`);
     return response.data;
   }
 };

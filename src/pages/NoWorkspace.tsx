@@ -25,7 +25,7 @@ const NoWorkspace: React.FC = () => {
                 </div>
 
                 <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full"
                     onClick={async () => {
                         await signOut();

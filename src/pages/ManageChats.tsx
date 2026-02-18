@@ -1,19 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   MessageSquare,
   Plus,
   RefreshCw,
-  Settings,
-  CheckCircle
+  CheckCircle,
+  Link as LinkIcon,
+  Copy
 } from 'lucide-react';
 
 import { BFButton } from '../components/BF-Button';
 import { BFCard } from '../components/BF-Card';
 import { BFBadge } from '../components/BF-Badge';
-import { BFInput } from '../components/BF-Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { chatsAPI } from '../lib/axios';
 import type { Chat } from '../lib/types';
@@ -21,33 +19,28 @@ import type { Chat } from '../lib/types';
 import { Switch } from '../components/ui/switch';
 
 export const ManageChats: React.FC = () => {
-  const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
 
   // Bind Modal State
   const [showBindModal, setShowBindModal] = useState(false);
-  const [bindCode, setBindCode] = useState('');
-  const [chatName, setChatName] = useState('');
-  const [chatIdInput, setChatIdInput] = useState(''); // Fallback manual ID
-  const [binding, setBinding] = useState(false);
 
   useEffect(() => {
     const wsId = localStorage.getItem('workspaceId');
     if (wsId) {
       setCurrentWorkspaceId(wsId);
-      fetchChats(wsId);
+      fetchChats();
     } else {
       setLoading(false);
       toast.error('Nenhum workspace selecionado');
     }
   }, []);
 
-  const fetchChats = async (workspaceId: string) => {
+  const fetchChats = async () => {
     try {
       setLoading(true);
-      const data = await chatsAPI.getChatsByWorkspace(workspaceId);
+      const data = await chatsAPI.getChatsByWorkspace();
       // Ensure compatibility if API returns object with data property or array directly
       const list = Array.isArray(data) ? data : (data.chats || []);
       setChats(list);
@@ -80,43 +73,7 @@ export const ManageChats: React.FC = () => {
     }
   };
 
-  const handleBindChat = async () => {
-    if (!chatName) {
-      toast.error('Nome do grupo é obrigatório');
-      return;
-    }
-    if (!bindCode && !chatIdInput) {
-      toast.error('Código ou ID do chat é obrigatório');
-      return;
-    }
 
-    try {
-      setBinding(true);
-      await chatsAPI.bindChat({
-        workspaceId: currentWorkspaceId!,
-        name: chatName,
-        // If code is provided, backend handles !bind logic, else use manual chatId
-        code: bindCode,
-        chatId: chatIdInput || undefined
-      });
-
-      toast.success('Grupo vinculado com sucesso!');
-      setShowBindModal(false);
-      setBindCode('');
-      setChatName('');
-      setChatIdInput('');
-      if (currentWorkspaceId) fetchChats(currentWorkspaceId);
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.message || 'Erro ao vincular grupo');
-    } finally {
-      setBinding(false);
-    }
-  };
-
-  const handleConfigureChat = (chatId: string) => {
-    navigate(`/admin/chats/${chatId}`);
-  };
 
   if (loading) {
     return (
@@ -148,7 +105,7 @@ export const ManageChats: React.FC = () => {
           <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-6">
             Para começar, use o comando <code>!bind</code> no grupo do WhatsApp ou adicione manualmente.
           </p>
-          <BFButton variant="outline" onClick={() => setShowBindModal(true)}>
+          <BFButton variant="secondary" onClick={() => setShowBindModal(true)}>
             Vincular Agora
           </BFButton>
         </div>
@@ -194,16 +151,7 @@ export const ManageChats: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-muted/30 border-t border-border mt-auto flex justify-end gap-2">
-                <BFButton
-                  size="sm"
-                  variant="secondary"
-                  icon={<Settings size={14} />}
-                  onClick={() => handleConfigureChat(chat.id)}
-                >
-                  Configurar
-                </BFButton>
-              </div>
+              {/* Configure button removed as settings are now centralized in Workspace Settings */}
             </BFCard>
           ))}
         </div>
@@ -213,66 +161,40 @@ export const ManageChats: React.FC = () => {
       <Dialog open={showBindModal} onOpenChange={setShowBindModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Vincular Novo Grupo</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <LinkIcon className="h-5 w-5 text-primary" />
+              Vincular novo grupo
+            </DialogTitle>
             <DialogDescription>
-              Use o comando <code>!bind</code> no WhatsApp para gerar um código ou insira o ID manualmente.
+              Para adicionar um novo grupo de pelada a este painel financeiro, adicione nosso bot no seu grupo do WhatsApp e digite o seguinte comando:
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <BFInput
-              label="Nome do Grupo (Interno)"
-              placeholder="Ex: Futebol de Terça"
-              value={chatName}
-              onChange={setChatName}
-              fullWidth
-            />
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Opção 1: Código</span>
-              </div>
+          <div className="py-6">
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border">
+              <code className="flex-1 font-mono text-sm font-semibold text-foreground">
+                /bind {currentWorkspaceId}
+              </code>
+              <BFButton
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`/bind ${currentWorkspaceId}`);
+                  toast.success('Comando copiado!');
+                }}
+                icon={<Copy className="h-4 w-4" />}
+              >
+                Copiar
+              </BFButton>
             </div>
 
-            <BFInput
-              label="Código de Vinculação"
-              placeholder="Ex: 123456"
-              value={bindCode}
-              onChange={setBindCode}
-              fullWidth
-            />
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Opção 2: ID Manual</span>
-              </div>
-            </div>
-
-            <BFInput
-              label="ID do Chat (Manual)"
-              placeholder="Ex: 5511999999999@g.us"
-              value={chatIdInput}
-              onChange={setChatIdInput}
-              helperText="Apenas se não tiver o código"
-              fullWidth
-            />
+            <p className="text-xs text-muted-foreground mt-4">
+              Após executar o comando no WhatsApp, o grupo será automaticamente vinculado a este workspace.
+            </p>
           </div>
 
           <DialogFooter>
-            <BFButton variant="ghost" onClick={() => setShowBindModal(false)}>Cancelar</BFButton>
-            <BFButton
-              onClick={handleBindChat}
-              disabled={binding}
-              loading={binding}
-            >
-              Vincular
-            </BFButton>
+            <BFButton variant="primary" onClick={() => setShowBindModal(false)}>Fechar</BFButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
