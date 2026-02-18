@@ -41,13 +41,12 @@ export const ManagePlayers: React.FC = () => {
 
     try {
       setLoading(true);
-      // Fetch all players for client-side filtering
       const response = await playersAPI.getPlayers({
-        limit: 1000, // Fetch a large batch to handle client-side filtering
+        limit: 1000,
         page: 1
       });
 
-      setAllPlayers(response.players || []);
+      setAllPlayers(response.data || []);
     } catch (error: any) {
       console.error('Error fetching players:', error);
       toast.error(error.response?.data?.message || 'Erro ao carregar jogadores');

@@ -18,7 +18,6 @@ import { ManageSubscriptionModal } from '../components/subscription/ManageSubscr
 
 export const UserDashboard: React.FC = () => {
   const { user, currentWorkspace, refreshUser, loading: authLoading } = useAuth();
-  console.log('Current Workspace:', currentWorkspace);
 
   const [membership, setMembership] = useState<Membership | null>(null);
   const [balance, setBalance] = useState<IFinancialBalance>({ totalPending: 0, history: [] });
@@ -31,62 +30,76 @@ export const UserDashboard: React.FC = () => {
   const [manageModalOpen, setManageModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
+  // Initial user refresh - only if needed or on mount once
   useEffect(() => {
     const initUser = async () => {
-      await refreshUser();
+      if (!user) {
+        await refreshUser();
+      }
     };
     initUser();
-  }, []);
+  }, [refreshUser]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       if (authLoading) return;
 
-      if (!user || !user.id || !currentWorkspace?.id) {
-        console.log('UserDashboard: Missing dependencies, aborting fetch.');
-
-        setLoading(false);
+      // Use primitive IDs for checks to avoid object reference issues
+      if (!user?.id || !currentWorkspace?.id) {
+        // console.log('UserDashboard: Missing dependencies (user or workspace), aborting fetch.');
+        if (isMounted) setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        if (isMounted) setLoading(true);
 
-        try {
-          const membershipResponse = await membershipsAPI.getMyMembership();
-          const membershipData = membershipResponse.data || membershipResponse.membership;
+        // Execute requests in parallel
+        const [membershipResponse, balanceData, gamesResponse] = await Promise.all([
+          membershipsAPI.getMyMembership().catch(err => {
+            console.log('No membership found or error', err);
+            return null;
+          }),
+          transactionsAPI.getMyBalance().catch(err => {
+            console.error('Error fetching balance', err);
+            return { totalPending: 0, history: [] }; // Fallback
+          }),
+          // getAllGames(page, limit, status...) -> status='open'
+          gamesAPI.getAllGames(1, 10, 'open').catch(err => {
+            console.error('Error fetching games', err);
+            return { data: [] };
+          })
+        ]);
 
-          if (membershipData) {
+        if (!isMounted) return;
+
+        // Process Membership
+        if (membershipResponse) {
+          let mData = membershipResponse;
+          if (mData.data) mData = mData.data;
+          if (mData.membership) mData = mData.membership;
+
+          if (mData && (mData.status || mData.planValueCents !== undefined)) { // Basic validation
             setMembership({
-              ...membershipData,
-              id: membershipData.id || membershipData._id,
-              planValue: membershipData.planValueCents ? membershipData.planValueCents / 100 : 0,
-              planValueCents: membershipData.planValueCents || 0
+              ...mData,
+              id: mData.id || mData._id,
+              planValue: mData.planValueCents ? mData.planValueCents / 100 : 0,
+              planValueCents: mData.planValueCents || 0
             });
           } else {
             setMembership(null);
           }
-        } catch (err) {
-          console.log('No membership found', err);
+        } else {
+          setMembership(null);
         }
 
-        try {
-          const balanceData = await transactionsAPI.getMyBalance();
-          setBalance(balanceData);
-        } catch (err) {
-          console.error('Error fetching balance', err);
-        }
+        // Process Balance
+        setBalance(balanceData || { totalPending: 0, history: [] });
 
-        // Fetch Games - usage of getAllGames with filter as requested
-        // Note: getAllGames might need workspaceId filter if it supports it, 
-        // to avoid seeing games from other workspaces if the API isn't scoped implicitly.
-        // Assuming getAllGames is global or handles scope via session/interceptor?
-        // Actually, let's verify if getAllGames takes workspaceId.
-        // Looking at axios.ts, getAllGames takes (page, limit, status, search). 
-        // It does NOT take workspaceId explicity. But interceptor adds x-workspace-id.
-        const gamesResponse = await gamesAPI.getAllGames(1, 10, 'open');
-        const gamesData = gamesResponse.data || gamesResponse;
-
+        // Process Games
+        const gamesData = gamesResponse?.data || gamesResponse || [];
         const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
           ...game,
           id: game.id || game._id,
@@ -106,15 +119,20 @@ export const UserDashboard: React.FC = () => {
         setGames(mappedGames);
 
       } catch (error: any) {
-        console.error('Error fetching data:', error);
-        setError('Erro ao carregar dados');
+        console.error('Error fetching dashboard data:', error);
+        if (isMounted) setError('Erro ao carregar dados');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchData();
-  }, [user, currentWorkspace, authLoading]);
+
+    return () => {
+      isMounted = false;
+    };
+    // CRITICAL: Depend only on IDs (primitives) to prevent infinite loops from object references
+  }, [user?.id, currentWorkspace?.id, authLoading]);
 
   const handlePayTransaction = (transactionId: string) => {
     setSelectedTransactionId(transactionId);
@@ -129,7 +147,10 @@ export const UserDashboard: React.FC = () => {
         setBalance(balanceData);
 
         const mResponse = await membershipsAPI.getMyMembership();
-        const mData = mResponse.data || mResponse.membership;
+        let mData = mResponse;
+        if (mData.data) mData = mData.data;
+        if (mData.membership) mData = mData.membership;
+
         if (mData) {
           setMembership({
             ...mData,
@@ -153,16 +174,11 @@ export const UserDashboard: React.FC = () => {
     try {
       const loadingToast = toast.loading('Entrando na lista...');
 
-      // Call API to add player
-      // We assume isGoalkeeper false for quick join, or could add a dialog later if needed
       await gamesAPI.addPlayerToGame(gameId, user.phone, user.name, false);
 
       toast.dismiss(loadingToast);
       toast.success('Presença Confirmada! ⚽');
 
-      // Refresh games list to show updated status
-      // We call the internal fetch logic again or a dedicated refresher
-      // Ideally we extract fetch logic to a useCallback, but for now specific reload:
       const gamesResponse = await gamesAPI.getAllGames(1, 10, 'open');
       const gamesData = gamesResponse.data || gamesResponse;
       const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
