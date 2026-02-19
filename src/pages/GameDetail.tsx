@@ -202,7 +202,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
     try {
       setSearchingPlayers(true);
       const response = await playersAPI.searchPlayers(search);
-      setSearchResults(response.players || []);
+      setSearchResults(response.data || []);
     } catch (error: any) {
       console.error('Error searching players:', error);
       toast.error('Erro ao buscar jogadores');

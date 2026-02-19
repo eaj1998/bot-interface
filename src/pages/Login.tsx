@@ -30,21 +30,39 @@ export const Login: React.FC = () => {
           const user = await authAPI.getMe();
           tokenService.setUser(user);
 
-          if (user.role === 'admin') {
-            navigate('/admin/dashboard', { replace: true });
+          const workspaces = user.workspaces || [];
+
+          // No workspaces → onboarding
+          if (workspaces.length === 0) {
+            navigate('/no-workspace', { replace: true });
             return;
           }
 
+          // Single workspace → auto-select and go to dashboard
+          if (workspaces.length === 1) {
+            const ws = workspaces[0];
+            const wsRole = (ws.role || '').toLowerCase();
+            const isAdmin = wsRole === 'admin' || wsRole === 'owner' || user.role === 'admin';
+            navigate(isAdmin ? '/admin/dashboard' : '/user/dashboard', { replace: true });
+            return;
+          }
+
+          // Multiple workspaces → check stored preference
           const storedWorkspaceId = localStorage.getItem('workspaceId');
-          if (!storedWorkspaceId && user.workspaces && user.workspaces.length > 1) {
+          if (storedWorkspaceId && workspaces.some((w: any) => w.id === storedWorkspaceId)) {
+            const ws = workspaces.find((w: any) => w.id === storedWorkspaceId);
+            const wsRole = (ws?.role || '').toLowerCase();
+            const isAdmin = wsRole === 'admin' || wsRole === 'owner' || user.role === 'admin';
+            navigate(isAdmin ? '/admin/dashboard' : '/user/dashboard', { replace: true });
+          } else {
             navigate('/select-workspace', { replace: true });
-            return;
           }
-
-          navigate('/user/dashboard', { replace: true });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Token validation failed:', error);
-          tokenService.clearTokens();
+          // Only clear tokens on actual auth errors (401), not workspace errors (403)
+          if (error?.response?.status === 401 || !error?.response) {
+            tokenService.clearTokens();
+          }
           setIsCheckingAuth(false);
         }
       } else {
@@ -138,9 +156,8 @@ export const Login: React.FC = () => {
       // Check workspace selection logic
       if (userData?.workspaces) {
         if (userData.workspaces.length === 0) {
-          // No workspaces - show message or redirect to create workspace
-          setError('Você não pertence a nenhum grupo ainda.');
-          setLoading(false);
+          // No workspaces - redirect to onboarding flow
+          navigate('/no-workspace');
           return;
         } else if (userData.workspaces.length === 1) {
           // Auto-selected by signIn, proceed to dashboard
