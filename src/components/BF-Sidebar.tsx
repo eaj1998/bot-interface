@@ -103,14 +103,12 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
                 {currentWorkspace?.name || 'Selecione...'}
               </div>
 
-              {workspaces.length > 1 && (
-                <button
-                  onClick={() => navigate('/select-workspace')}
-                  className="text-xs text-[#00D66F] hover:text-[#00D66F]/80 transition-colors whitespace-nowrap cursor-pointer"
-                >
-                  Trocar
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/select-workspace')}
+                className="text-xs text-[#00D66F] hover:text-[#00D66F]/80 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                Trocar / Novo
+              </button>
             </div>
           </div>
         )}

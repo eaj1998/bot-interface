@@ -88,16 +88,20 @@ api.interceptors.response.use(
 
     // Handle 403 Forbidden (e.g., early access restriction for future games)
     if (error.response?.status === 403) {
-      const message = (error.response.data as any)?.message ||
-        'Acesso restrito a mensalistas para jogos futuros';
+      const url = error.config?.url || '';
+      const isAuthOrWorkspaceCall = url.includes('/auth/') || url.includes('/workspaces');
+      if (!isAuthOrWorkspaceCall) {
+        const message = (error.response.data as any)?.message ||
+          'Acesso restrito a mensalistas para jogos futuros';
 
-      // Dynamically import toast to avoid circular dependencies
-      import('sonner').then(({ toast }) => {
-        toast.error(message, {
-          description: 'Torne-se um mensalista para ter early access aos jogos!',
-          duration: 5000,
+        // Dynamically import toast to avoid circular dependencies
+        import('sonner').then(({ toast }) => {
+          toast.error(message, {
+            description: 'Torne-se um mensalista para ter early access aos jogos!',
+            duration: 5000,
+          });
         });
-      });
+      }
 
       return Promise.reject(error);
     }
@@ -220,6 +224,14 @@ export const authAPI = {
   getMe: async () => {
     const response = await api.get('/auth/me');
     // API returns {success: true, data: {user data}}, so we need to extract the data
+    return response.data.data || response.data;
+  },
+
+  /**
+   * Atualiza o perfil do usuário autenticado (global, sem necessidade de workspace)
+   */
+  updateAuthProfile: async (data: { name?: string }) => {
+    const response = await api.put('/auth/me', data);
     return response.data.data || response.data;
   },
 
@@ -496,6 +508,17 @@ export const chatsAPI = {
  * API de Workspaces
  */
 export const workspacesAPI = {
+  /**
+   * Cria um novo workspace
+   */
+  createWorkspace: async (data: { name: string; slug?: string }) => {
+    const response = await api.post('/workspaces', data, {
+      headers: { 'x-workspace-id': undefined },
+    });
+    return response.data;
+  },
+
+
   /**
    * Busca todos os workspaces
    */

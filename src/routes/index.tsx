@@ -33,11 +33,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/select-workspace',
-    element: (
-      <ProtectedRoute>
-        <SelectWorkspace />
-      </ProtectedRoute>
-    ),
+    element: <SelectWorkspace />,
   },
 
   {
@@ -47,11 +43,7 @@ export const router = createBrowserRouter([
 
   {
     path: '/no-workspace',
-    element: (
-      <ProtectedRoute>
-        <NoWorkspace />
-      </ProtectedRoute>
-    ),
+    element: <NoWorkspace />,
   },
 
   {
