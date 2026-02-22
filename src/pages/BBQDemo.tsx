@@ -79,7 +79,7 @@ export const BBQDemo: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h1 className="text-3xl font-bold text-[--foreground]">
                         Gerenciar Churrascos
@@ -88,14 +88,17 @@ export const BBQDemo: React.FC = () => {
                         Crie e gerencie eventos de churrasco
                     </p>
                 </div>
-                <BFButton
-                    variant="primary"
-                    icon={<BFIcons.Plus size={20} />}
-                    onClick={() => setIsCreateModalOpen(true)}
-                    data-test="create-bbq-button"
-                >
-                    Novo Churrasco
-                </BFButton>
+                <div className="w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+                    <BFButton
+                        variant="primary"
+                        icon={<BFIcons.Plus size={20} />}
+                        onClick={() => setIsCreateModalOpen(true)}
+                        data-test="create-bbq-button"
+                        className="w-full sm:w-auto"
+                    >
+                        Novo Churrasco
+                    </BFButton>
+                </div>
             </div>
 
             {/* Stats */}

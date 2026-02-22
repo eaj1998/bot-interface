@@ -42,6 +42,7 @@ const whatsappSchema = z.object({
 
     // Rules
     allowGuests: z.boolean(),
+    maxPlayersPerGame: z.coerce.number().min(1, "Mínimo 1 jogador").optional(),
 
     // Financials
     defaultPriceCents: z.number().min(0),
@@ -87,6 +88,7 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
 
             // Rules
             allowGuests: chat.settings?.allowGuests ?? true,
+            maxPlayersPerGame: chat.settings?.maxPlayersPerGame ?? 14,
 
             // Financials
             defaultPriceCents: chat.financials?.defaultPriceCents ?? 0,
@@ -102,6 +104,7 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
             time: chat.schedule?.time ?? '20:00',
             title: chat.schedule?.title ?? '',
             allowGuests: chat.settings?.allowGuests ?? true,
+            maxPlayersPerGame: chat.settings?.maxPlayersPerGame ?? 14,
             defaultPriceCents: chat.financials?.defaultPriceCents ?? 0,
             pixKey: chat.financials?.pixKey ?? '',
         });
@@ -114,6 +117,7 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
                 label: data.label,
                 settings: {
                     allowGuests: data.allowGuests,
+                    maxPlayersPerGame: data.maxPlayersPerGame,
                 },
                 financials: {
                     defaultPriceCents: data.defaultPriceCents,
@@ -233,6 +237,34 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
                                 <BFInput {...field} placeholder="Chave Pix para pagamentos no bot" fullWidth />
                             )}
                         />
+                    </div>
+                </div>
+            </div>
+
+            {/* Section: Rules */}
+            <div className="space-y-4 pt-4 border-t border-border w-full">
+                <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    ⚖️ Regras
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                    <div className="space-y-2 w-full max-w-full overflow-hidden">
+                        <Label>Máximo de Jogadores</Label>
+                        <Controller
+                            name="maxPlayersPerGame"
+                            control={control}
+                            render={({ field }) => (
+                                <BFInput
+                                    {...field}
+                                    type="number"
+                                    min={1}
+                                    placeholder="Ex: 14"
+                                    fullWidth
+                                />
+                            )}
+                        />
+                        <p className="text-xs text-muted-foreground break-words">
+                            Número máximo de jogadores por jogo (ex: 14 para 7x7)
+                        </p>
                     </div>
                 </div>
             </div>

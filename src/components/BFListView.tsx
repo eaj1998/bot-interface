@@ -148,22 +148,29 @@ export function BFListView<T extends { id: string }>({
     return (
         <div className="space-y-6" data-test={dataTest}>
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-[--foreground] mb-2">{title}</h1>
                     <p className="text-[--muted-foreground]">{description}</p>
                 </div>
                 {createButton && (
-                    <BFButton
-                        variant="primary"
-                        icon={createButton.icon || <BFIcons.Plus size={20} />}
-                        onClick={createButton.onClick}
-                        data-test={`${dataTest}-create-button`}
-                    >
-                        {createButton.label}
-                    </BFButton>
+                    <div className="w-full sm:w-auto shrink-0">
+                        <BFButton
+                            variant="primary"
+                            icon={createButton.icon || <BFIcons.Plus size={20} />}
+                            onClick={createButton.onClick}
+                            data-test={`${dataTest}-create-button`}
+                            className="w-full sm:w-auto"
+                        >
+                            {createButton.label}
+                        </BFButton>
+                    </div>
                 )}
-                {headerActions}
+                {headerActions && (
+                    <div className="w-full sm:w-auto mt-2 sm:mt-0">
+                        {headerActions}
+                    </div>
+                )}
             </div>
 
             {/* Statistics Cards */}

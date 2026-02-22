@@ -86,17 +86,20 @@ export const ManageChats: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 w-full">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Gerenciar Chats</h1>
           <p className="text-muted-foreground">Grupos de WhatsApp vinculados a este workspace</p>
         </div>
-        <BFButton
-          onClick={() => setShowBindModal(true)}
-          icon={<Plus size={16} />}
-        >
-          Vincular Novo Grupo
-        </BFButton>
+        <div className="w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+          <BFButton
+            onClick={() => setShowBindModal(true)}
+            icon={<Plus size={16} />}
+            className="w-full sm:w-auto"
+          >
+            Vincular Novo Grupo
+          </BFButton>
+        </div>
       </div>
 
       {chats.length === 0 ? (
@@ -172,13 +175,16 @@ export const ManageChats: React.FC = () => {
           </DialogHeader>
 
           <div className="py-6">
-            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border">
-              <code className="flex-1 font-mono text-sm font-semibold text-foreground">
-                /bind {currentWorkspaceId}
-              </code>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 bg-muted/50 rounded-lg border border-border w-full">
+              <div className="flex-1 min-w-0 max-w-full overflow-x-auto">
+                <code className="block font-mono text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">
+                  /bind {currentWorkspaceId}
+                </code>
+              </div>
               <BFButton
                 variant="ghost"
                 size="sm"
+                className="w-full sm:w-auto flex-shrink-0 mt-2 sm:mt-0"
                 onClick={() => {
                   navigator.clipboard.writeText(`/bind ${currentWorkspaceId}`);
                   toast.success('Comando copiado!');
