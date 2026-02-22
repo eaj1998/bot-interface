@@ -321,33 +321,6 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                         </div>
                     </div>
                 </div>
-            ),
-        },
-        {
-            key: 'actions',
-            label: 'Ações',
-            render: (_: any, row: BBQParticipant) => (
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 mr-2">
-                        <button
-                            onClick={() => handleToggleFree(row.userId, !!row.isFree)}
-                            className={`
-                                relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]
-                                ${row.isFree ? 'bg-[var(--primary)]' : 'bg-gray-200'}
-                            `}
-                            title={row.isFree ? "Remover isenção" : "Marcar como isento"}
-                        >
-                            <span className="sr-only">Toggle Isento</span>
-                            <span
-                                className={`
-                                    inline-block h-3 w-3 transform rounded-full bg-white transition-transform
-                                    ${row.isFree ? 'translate-x-5' : 'translate-x-1'}
-                                `}
-                            />
-                        </button>
-                        <span className="text-xs text-[--muted-foreground]">Isento</span>
-                    </div>
-                </div>
             )
         }
     ];
@@ -363,20 +336,23 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
     const profit = projectedRevenue - totalCost;
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 sm:p-6 w-full max-w-full overflow-hidden">
             {/* Header / Nav */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
                 <BFButton
                     variant="ghost"
                     icon={<BFIcons.ArrowLeft size={20} />}
                     onClick={() => onBack ? onBack() : navigate(-1)}
+                    className="shrink-0"
                 >
                     Voltar
                 </BFButton>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-[--foreground] flex items-center gap-3">
-                        Churrasco {formatEventDate(bbq.date)}
-                        {getStatusBadge(bbq.status)}
+                <div className="flex-1 w-full min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-bold text-[--foreground] flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span className="truncate">Churrasco {formatEventDate(bbq.date)}</span>
+                        <div className="shrink-0 mt-1 sm:mt-0">
+                            {getStatusBadge(bbq.status)}
+                        </div>
                     </h1>
                 </div>
             </div>
@@ -404,40 +380,70 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                             )}
                         </div>
 
-                        <div className="max-h-[600px] overflow-y-auto">
+                        <div className="w-full">
                             <BFTable
                                 columns={participantColumns}
                                 data={bbq.participants}
                                 emptyMessage="Nenhum participante ainda."
                                 actions={(row: BBQParticipant) => {
-                                    if (bbq.status === 'open' && !isReadOnly) {
-                                        return (
-                                            <button
-                                                onClick={() => handleRemoveParticipant(row.userId)}
-                                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
-                                                title="Remover"
-                                            >
-                                                <BFIcons.Trash2 size={16} />
-                                            </button>
-                                        );
-                                    }
-                                    if (bbq.status === 'closed' && !row.isFree) {
-                                        return (
-                                            <button
-                                                onClick={() => handleTogglePayment(row.userId, row.isPaid)}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${row.isPaid
-                                                    ? 'bg-green-500/10 text-green-600 border-green-200 hover:bg-green-500/20'
-                                                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
-                                                    }`}
-                                            >
-                                                {row.isPaid ? 'Pago ✅' : 'Pagar 💲'}
-                                            </button>
-                                        );
-                                    }
-                                    if (row.isFree) {
-                                        return <span className="text-xs text-green-600 font-medium px-3">Isento</span>;
-                                    }
-                                    return null;
+                                    return (
+                                        <div className="flex flex-row items-center justify-between gap-3 w-full sm:w-auto p-1">
+                                            {/* Isento Toggle */}
+                                            {(!isReadOnly) && (
+                                                <div className="flex items-center gap-2 cursor-pointer touch-manipulation">
+                                                    <button
+                                                        type="button"
+                                                        role="switch"
+                                                        aria-checked={row.isFree}
+                                                        onClick={() => handleToggleFree(row.userId, !!row.isFree)}
+                                                        className={`
+                                                            relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+                                                            ${row.isFree ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}
+                                                        `}
+                                                        title={row.isFree ? "Remover isenção" : "Marcar como isento"}
+                                                    >
+                                                        <span className="sr-only">Isento</span>
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className={`
+                                                                pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+                                                                ${row.isFree ? 'translate-x-5' : 'translate-x-0'}
+                                                            `}
+                                                        />
+                                                    </button>
+                                                    <span className="text-sm font-medium text-foreground select-none">Isento</span>
+                                                </div>
+                                            )}
+
+                                            {/* Container right aligned actions */}
+                                            <div className="flex items-center gap-2 ml-auto shrink-0">
+                                                {/* Pagar Button (Closed) */}
+                                                {(bbq.status === 'closed' && !row.isFree) && (
+                                                    <button
+                                                        onClick={() => handleTogglePayment(row.userId, row.isPaid)}
+                                                        className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-sm font-semibold transition-all border shadow-sm select-none
+                                                            ${row.isPaid
+                                                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700'
+                                                            }`}
+                                                    >
+                                                        {row.isPaid ? '✅ Pago' : '💲 Pagar'}
+                                                    </button>
+                                                )}
+
+                                                {/* Remove Button (Open) */}
+                                                {(bbq.status === 'open' && !isReadOnly) && (
+                                                    <button
+                                                        onClick={() => handleRemoveParticipant(row.userId)}
+                                                        className="flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-md transition-colors shadow-sm border border-red-100 dark:border-red-900/30"
+                                                        title="Remover participante"
+                                                    >
+                                                        <BFIcons.Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
                                 }}
                             />
                         </div>

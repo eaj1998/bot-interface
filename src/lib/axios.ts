@@ -443,6 +443,10 @@ export const chatsAPI = {
       priceCents: number;
       pix: string;
     };
+    settings?: {
+      allowGuests?: boolean;
+      maxPlayersPerGame?: number;
+    };
   }) => {
     const response = await api.post('/chats', data);
     return response.data;
@@ -462,6 +466,7 @@ export const chatsAPI = {
         autoCreateGame?: boolean;
         autoCreateDaysBefore?: number;
         requirePaymentProof?: boolean;
+        maxPlayersPerGame?: number;
       };
       financials?: {
         defaultPriceCents?: number;

@@ -193,6 +193,7 @@ export interface Chat {
   lastMessageAt?: string;
   settings?: {
     allowGuests?: boolean;
+    maxPlayersPerGame?: number;
   };
   financials?: {
     defaultPriceCents?: number;
