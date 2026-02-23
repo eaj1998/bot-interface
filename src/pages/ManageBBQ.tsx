@@ -91,23 +91,6 @@ export const ManageBBQ: React.FC<ManageBBQProps> = ({ onSelectBBQ }) => {
 
     return (
         <div className="space-y-6">
-<<<<<<< HEAD
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-                <div>
-                    <h1 className="text-2xl font-bold text-[--foreground]">Gerenciar Churrascos</h1>
-                    <p className="text-[--muted-foreground]">Organize os eventos de churrasco da turma</p>
-                </div>
-                <div className="w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
-                    <BFButton
-                        variant="primary"
-                        icon={<BFIcons.Plus size={20} />}
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="w-full sm:w-auto"
-                    >
-                        Novo Churrasco
-                    </BFButton>
-                </div>
-=======
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
                 <div className="w-full">
                     <h1 className="text-2xl font-bold text-[--foreground]">Gerenciar Churrascos</h1>
@@ -121,7 +104,6 @@ export const ManageBBQ: React.FC<ManageBBQProps> = ({ onSelectBBQ }) => {
                 >
                     Novo Churrasco
                 </BFButton>
->>>>>>> 99abb01b (fix responsiveness)
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

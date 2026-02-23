@@ -142,15 +142,9 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-2 w-full overflow-hidden sm:overflow-visible">
             {/* Section: General */}
-<<<<<<< HEAD
-            <div className="space-y-4 w-full">
-                <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    🏷️ Identificação
-=======
             <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <Tag size={16} /> Identificação
->>>>>>> 99abb01b (fix responsiveness)
                 </h3>
                 <div className="space-y-2">
                     <Label>Label do Chat</Label>
@@ -168,15 +162,9 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
             </div>
 
             {/* Section: Schedule */}
-<<<<<<< HEAD
-            <div className="space-y-4 pt-4 border-t border-border w-full">
-                <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    📅 Agendamento Padrão
-=======
             <div className="space-y-4 pt-4 border-t border-border">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <Calendar size={16} /> Agendamento Padrão
->>>>>>> 99abb01b (fix responsiveness)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="space-y-2 w-full max-w-full overflow-hidden">
@@ -221,15 +209,9 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
             </div>
 
             {/* Section: Financials */}
-<<<<<<< HEAD
-            <div className="space-y-4 pt-4 border-t border-border w-full">
-                <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    💰 Financeiro (Bot)
-=======
             <div className="space-y-4 pt-4 border-t border-border">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <CircleDollarSign size={16} /> Financeiro (Bot)
->>>>>>> 99abb01b (fix responsiveness)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="space-y-2 w-full max-w-full overflow-hidden">
@@ -259,11 +241,10 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* Section: Rules */}
             <div className="space-y-4 pt-4 border-t border-border w-full">
-                <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    ⚖️ Regras
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Tag size={16} /> Regras
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="space-y-2 w-full max-w-full overflow-hidden">
@@ -288,12 +269,8 @@ const ChatSettingsForm: React.FC<ChatSettingsFormProps> = ({ chat, onUpdate }) =
                 </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-end pt-4 border-t border-border mt-6 w-full">
-                <BFButton type="submit" disabled={saving} icon={<Save size={16} />} className="w-full sm:w-auto">
-=======
-            <div className="flex justify-end pt-4 border-t border-border">
+            <div className="flex justify-end pt-4 border-t border-border mt-6">
                 <BFButton type="submit" disabled={saving} isLoading={saving} icon={<Save size={16} />}>
->>>>>>> 99abb01b (fix responsiveness)
                     Salvar Configurações deste Chat
                 </BFButton>
             </div>
@@ -381,17 +358,10 @@ export const WorkspaceSettings: React.FC = () => {
     }
 
     return (
-<<<<<<< HEAD
-        <div className="max-w-5xl mx-auto w-full space-y-6">
-            <div className="space-y-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Configurações do Workspace</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Gerencie todos os aspectos do seu grupo em um só lugar</p>
-=======
         <div className="p-4 sm:p-6 max-w-5xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Configurações do Workspace</h1>
                 <p className="text-muted-foreground">Gerencie todos os aspectos do seu grupo em um só lugar</p>
->>>>>>> 99abb01b (fix responsiveness)
             </div>
 
             <Tabs defaultValue="general" className="w-full">
@@ -465,21 +435,12 @@ export const WorkspaceSettings: React.FC = () => {
                 </TabsContent>
 
                 {/* 2. WHATSAPP TAB */}
-<<<<<<< HEAD
-                <TabsContent value="whatsapp" className="w-full mt-0">
-                    <BFCard className="p-4 sm:p-6 w-full shadow-sm max-w-full overflow-hidden">
-                        <div className="mb-6 space-y-1">
-                            <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2 flex-wrap">
-                                <MessageSquare className="w-5 h-5 text-primary flex-shrink-0" />
-                                <span className="break-words">Chats Vinculados</span>
-=======
                 <TabsContent value="whatsapp">
                     <BFCard className="p-4 sm:p-6">
                         <div className="mb-6">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 <MessageSquare className="w-5 h-5 text-primary" />
                                 Chats Vinculados
->>>>>>> 99abb01b (fix responsiveness)
                             </h2>
                             <p className="text-xs sm:text-sm text-muted-foreground break-words pr-2">
                                 Configure as regras e agendamento para cada grupo vinculado ao bot.
@@ -494,17 +455,6 @@ export const WorkspaceSettings: React.FC = () => {
                                     Para adicionar um novo grupo de pelada a este painel financeiro, adicione nosso bot no seu grupo do WhatsApp e digite o seguinte comando:
                                 </div>
 
-<<<<<<< HEAD
-                                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
-                                    <div className="flex-1 bg-muted rounded p-2 min-w-0 max-w-full overflow-x-auto">
-                                        <code className="block font-mono text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">
-                                            /bind {currentWorkspace.id}
-                                        </code>
-                                    </div>
-                                    <BFButton
-                                        variant="secondary"
-                                        className="hover:bg-muted/80 w-full sm:w-auto flex-shrink-0"
-=======
                                 <div className="mt-3 flex flex-wrap sm:flex-nowrap items-center gap-2">
                                     <code className="relative rounded bg-muted px-[0.5rem] py-[0.5rem] font-mono text-sm font-semibold text-foreground break-all">
                                         /bind {currentWorkspace.id}
@@ -513,7 +463,6 @@ export const WorkspaceSettings: React.FC = () => {
                                         variant="ghost"
                                         size="icon"
                                         className="hover:bg-muted/80 shrink-0"
->>>>>>> 99abb01b (fix responsiveness)
                                         onClick={() => {
                                             navigator.clipboard.writeText(`/bind ${currentWorkspace.id}`);
                                             toast.success('Comando copiado!');

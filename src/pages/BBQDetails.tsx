@@ -13,7 +13,7 @@ import { bbqAPI, playersAPI } from '../lib/axios';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { BFInput } from '../components/BF-Input';
-import { Search, Check, Banknote } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Skeleton } from '../components/ui/skeleton';
 
 interface BBQDetailsProps {
@@ -386,15 +386,9 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
     const profit = projectedRevenue - totalCost;
 
     return (
-<<<<<<< HEAD
         <div className="space-y-6 p-4 sm:p-6 w-full max-w-full overflow-hidden">
             {/* Header / Nav */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
-=======
-        <div className="space-y-6 p-4 sm:p-6">
-            {/* Header / Nav */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
->>>>>>> 99abb01b (fix responsiveness)
                 <BFButton
                     variant="ghost"
                     icon={<BFIcons.ArrowLeft size={20} />}
@@ -442,7 +436,6 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                 data={bbq.participants}
                                 emptyMessage="Nenhum participante ainda."
                                 actions={(row: BBQParticipant) => {
-<<<<<<< HEAD
                                     return (
                                         <div className="flex flex-row items-center justify-between gap-3 w-full sm:w-auto p-1">
                                             {/* Isento Toggle */}
@@ -501,40 +494,6 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                             </div>
                                         </div>
                                     );
-=======
-                                    if (bbq.status === 'open' && !isReadOnly) {
-                                        return (
-                                            <button
-                                                onClick={() => handleRemoveParticipant(row.userId)}
-                                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
-                                                title="Remover"
-                                            >
-                                                <BFIcons.Trash2 size={16} />
-                                            </button>
-                                        );
-                                    }
-                                    if (bbq.status === 'closed' && !row.isFree) {
-                                        return (
-                                            <button
-                                                onClick={() => handleTogglePayment(row.userId, row.isPaid)}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${row.isPaid
-                                                    ? 'bg-green-500/10 text-green-600 border-green-200 hover:bg-green-500/20'
-                                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
-                                                    }`}
-                                            >
-                                                {row.isPaid ? (
-                                                    <><Check size={14} /> Pago</>
-                                                ) : (
-                                                    <><Banknote size={14} /> Pagar</>
-                                                )}
-                                            </button>
-                                        );
-                                    }
-                                    if (row.isFree) {
-                                        return <span className="text-xs text-green-600 font-medium px-3">Isento</span>;
-                                    }
-                                    return null;
->>>>>>> 99abb01b (fix responsiveness)
                                 }}
                             />
                         </div>

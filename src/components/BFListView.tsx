@@ -149,11 +149,7 @@ export function BFListView<T extends { id: string }>({
     return (
         <div className="space-y-6" data-test={dataTest}>
             {/* Header */}
-<<<<<<< HEAD
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-=======
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
->>>>>>> 99abb01b (fix responsiveness)
                 <div>
                     <h1 className="text-[--foreground] mb-2">{title}</h1>
                     <p className="text-[--muted-foreground]">{description}</p>
