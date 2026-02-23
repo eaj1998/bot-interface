@@ -298,10 +298,10 @@ export const ManageGames: React.FC<ManageGamesProps> = ({ onSelectGame }) => {
       <BFListView
         title="Gerenciar Jogos"
         description="Crie e gerencie jogos e eventos esportivos"
-        createButton={{
-          label: 'Novo Jogo',
-          onClick: () => setIsCreateDialogOpen(true),
-        }}
+        // createButton={{
+        //   label: 'Novo Jogo',
+        //   onClick: () => setIsCreateDialogOpen(true),
+        // }}
         stats={listStats}
         searchPlaceholder="Buscar por nome ou local..."
         searchTerm={searchTerm}

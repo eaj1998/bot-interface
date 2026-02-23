@@ -303,7 +303,7 @@ export default function AppLayout() {
                           </div>
                           <button
                             onClick={toggleTheme}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-offset-2 ${isDarkMode ? 'bg-[--primary]' : 'bg-gray-200'
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${isDarkMode ? 'bg-primary' : 'bg-gray-200'
                               }`}
                           >
                             <span
@@ -318,14 +318,28 @@ export default function AppLayout() {
 
                       {/* Other Settings Options */}
                       <button
-                        className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 cursor-pointer group"
                         onClick={() => {
                           setShowSettingsMenu(false);
                           navigate('/user/profile');
                         }}
                       >
-                        <BFIcons.User size={18} className="text-[--muted-foreground]" />
+                        <BFIcons.User size={18} className="text-[--muted-foreground] group-hover:text-[--foreground] transition-colors" />
                         <span className="text-sm text-[--foreground]">Meu Perfil</span>
+                      </button>
+
+                      <div className="border-t border-gray-200 dark:border-gray-800 my-1" />
+
+                      <button
+                        className="w-full px-4 py-2.5 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-3 cursor-pointer text-red-600 dark:text-red-400 group"
+                        onClick={async () => {
+                          setShowSettingsMenu(false);
+                          const { authAPI } = await import('../lib/axios');
+                          await authAPI.logout();
+                        }}
+                      >
+                        <BFIcons.LogOut size={18} />
+                        <span className="text-sm font-medium">Sair</span>
                       </button>
                     </div>
                   </>

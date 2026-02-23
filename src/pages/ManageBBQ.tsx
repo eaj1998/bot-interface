@@ -8,6 +8,7 @@ import { formatISODate } from '../lib/dateUtils';
 import type { BBQResponseDto } from '../lib/types';
 import { toast } from 'sonner';
 import { BBQCreateModal } from '../components/BBQ-CreateModal';
+import { Skeleton } from '../components/ui/skeleton';
 
 interface ManageBBQProps {
     onSelectBBQ?: (id: string) => void;
@@ -55,12 +56,34 @@ export const ManageBBQ: React.FC<ManageBBQProps> = ({ onSelectBBQ }) => {
         return <BFBadge variant={config.variant} size="md">{config.label}</BFBadge>;
     };
 
-    if (loading) {
+    if (loading && bbqs.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)] mb-4" />
-                    <p className="text-[--muted-foreground]">Carregando churrascos...</p>
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+                    <div className="w-full">
+                        <Skeleton className="h-8 w-3/4 sm:w-64 mb-2" />
+                        <Skeleton className="h-4 w-full sm:w-96" />
+                    </div>
+                    <Skeleton className="h-10 w-full sm:w-40" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 h-[220px] flex flex-col justify-between">
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <Skeleton className="h-6 w-24 rounded-full" />
+                                </div>
+                                <Skeleton className="h-6 w-40 mb-4" />
+                                <Skeleton className="h-4 w-full mb-2" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </div>
+                            <div className="flex items-center gap-2 mt-4">
+                                <Skeleton className="h-4 w-4 rounded-full" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -68,6 +91,7 @@ export const ManageBBQ: React.FC<ManageBBQProps> = ({ onSelectBBQ }) => {
 
     return (
         <div className="space-y-6">
+<<<<<<< HEAD
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                 <div>
                     <h1 className="text-2xl font-bold text-[--foreground]">Gerenciar Churrascos</h1>
@@ -83,6 +107,21 @@ export const ManageBBQ: React.FC<ManageBBQProps> = ({ onSelectBBQ }) => {
                         Novo Churrasco
                     </BFButton>
                 </div>
+=======
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+                <div className="w-full">
+                    <h1 className="text-2xl font-bold text-[--foreground]">Gerenciar Churrascos</h1>
+                    <p className="text-[--muted-foreground]">Organize os eventos de churrasco da turma</p>
+                </div>
+                <BFButton
+                    variant="primary"
+                    icon={<BFIcons.Plus size={20} />}
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="w-full sm:w-auto justify-center"
+                >
+                    Novo Churrasco
+                </BFButton>
+>>>>>>> 99abb01b (fix responsiveness)
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -8,17 +8,7 @@ import { BFIcons } from '../components/BF-Icons';
 import { playersAPI, tokenService } from '../lib/axios';
 import type { Player } from '../lib/types'; // Updated type import
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '../components/ui/dialog';
-import { BFInput } from '../components/BF-Input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-
+import { EditPlayerModal } from '../components/EditPlayerModal';
 
 export const PlayerDetail: React.FC = () => {
   const { playerId } = useParams<{ playerId: string }>();
@@ -30,19 +20,6 @@ export const PlayerDetail: React.FC = () => {
   const [transactions, setTransactions] = useState<any[]>([]); // Using any for now to match backend return
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Edit Form State
-  const [editForm, setEditForm] = useState({
-    name: '',
-    nick: '',
-    email: '',
-    phone: '',
-    cpf: '',
-    status: 'active' as 'active' | 'inactive' | 'suspended',
-    isGoalie: false,
-    role: 'user' as 'admin' | 'user',
-  });
 
   useEffect(() => {
     if (playerId) {
@@ -63,17 +40,6 @@ export const PlayerDetail: React.FC = () => {
       setPlayer(playerData);
       // Backend returns { ledgers: [], ... } or { transactions: [] }? Service returns { ledgers: ... }
       setTransactions(transactionsData.ledgers || transactionsData.transactions || []);
-
-      setEditForm({
-        name: playerData.name || '',
-        nick: playerData.nick || '',
-        email: playerData.email || '',
-        phone: playerData.phone || '',
-        cpf: playerData.cpf || '',
-        status: playerData.status || 'active',
-        isGoalie: playerData.isGoalie || false,
-        role: playerData.role || 'user',
-      });
     } catch (error: any) {
       console.error('Erro ao carregar dados do jogador:', error);
       toast.error('Erro ao carregar dados do jogador');
@@ -82,18 +48,18 @@ export const PlayerDetail: React.FC = () => {
     }
   };
 
-  const handleSavePlayer = async () => {
+  const handleSavePlayer = async (updatedData: Partial<Player>) => {
     if (!playerId) return;
 
     try {
-      setIsSaving(true);
       await playersAPI.updatePlayer(playerId, {
-        name: editForm.name,
-        nick: editForm.nick,
-        phoneE164: editForm.phone,
-        status: editForm.status,
-        isGoalie: editForm.isGoalie,
-        role: editForm.role,
+        name: updatedData.name,
+        nick: updatedData.nick,
+        phoneE164: updatedData.phone,
+        status: updatedData.status,
+        isGoalie: updatedData.isGoalie,
+        role: updatedData.role,
+        profile: updatedData.profile,
       });
       toast.success('Jogador atualizado com sucesso!');
       setIsEditModalOpen(false);
@@ -101,8 +67,6 @@ export const PlayerDetail: React.FC = () => {
     } catch (error: any) {
       console.error('Erro ao atualizar jogador:', error);
       toast.error('Erro ao atualizar jogador');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -258,47 +222,49 @@ export const PlayerDetail: React.FC = () => {
               <img
                 src={player.profilePicture}
                 alt={player.name}
-                className="w-32 h-32 rounded-full object-cover"
+                className="w-32 h-32 rounded-full object-cover shadow-sm"
               />
             ) : (
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold shadow-sm">
                 {player.name.charAt(0).toUpperCase()}
               </div>
             )}
 
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">{player.name}</h2>
+            <div className="space-y-2 w-full">
+              <h2 className="text-xl sm:text-2xl font-bold truncate px-2">{player.name}</h2>
               {player.nick && (
-                <p className="text-lg text-muted-foreground">"{player.nick}"</p>
+                <p className="text-lg text-muted-foreground truncate px-2">"{player.nick}"</p>
               )}
-              {getStatusBadge(player.status)}
-              {player.isGoalie && (
-                <BFBadge variant="info" className="ml-2">Goleiro</BFBadge>
-              )}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                {getStatusBadge(player.status)}
+                {player.isGoalie && (
+                  <BFBadge variant="info">Goleiro</BFBadge>
+                )}
+              </div>
             </div>
           </div>
         </BFCard>
 
-        <BFCard className="lg:col-span-2">
-          <h3 className="text-xl font-semibold mb-4">Informações</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <BFCard className="lg:col-span-2 flex flex-col justify-center">
+          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Informações</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
             <div>
-              <p className="text-sm text-muted-foreground">Telefone</p>
-              <p className="font-medium">{formatPhone(player.phone)}</p>
+              <p className="text-sm text-muted-foreground mb-1">Telefone</p>
+              <p className="font-medium text-lg">{formatPhone(player.phone)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Função</p>
-              <p className="font-medium">
+              <p className="text-sm text-muted-foreground mb-1">Função</p>
+              <p className="font-medium text-lg">
                 {player.role === 'admin' ? 'Administrador' : 'Jogador'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Data de Entrada</p>
-              <p className="font-medium">{formatDate(player.joinDate)}</p>
+              <p className="text-sm text-muted-foreground mb-1">Data de Entrada</p>
+              <p className="font-medium text-lg">{formatDate(player.joinDate)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Última Atividade</p>
-              <p className="font-medium">{formatDateTime(player.lastActivity)}</p>
+              <p className="text-sm text-muted-foreground mb-1">Última Atividade</p>
+              <p className="font-medium text-lg">{formatDateTime(player.lastActivity)}</p>
             </div>
           </div>
         </BFCard>
@@ -307,11 +273,11 @@ export const PlayerDetail: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <BFCard>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Saldo</p>
-            <p className={`text-3xl font-bold ${player.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className="text-sm font-medium text-muted-foreground mb-2">Saldo</p>
+            <p className={`text-3xl font-bold ${player.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {formatCurrency(player.balance)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-2">
               (Simulado: R$ 0,00)
             </p>
           </div>
@@ -319,8 +285,8 @@ export const PlayerDetail: React.FC = () => {
 
         <BFCard>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Total em Débitos</p>
-            <p className="text-3xl font-bold text-red-600">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Total em Débitos</p>
+            <p className="text-3xl font-bold text-red-600 dark:text-red-400">
               {formatCurrency(player.totalDebt)}
             </p>
           </div>
@@ -328,8 +294,8 @@ export const PlayerDetail: React.FC = () => {
 
         <BFCard>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Pendências</p>
-            <p className="text-3xl font-bold text-orange-600">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Pendências</p>
+            <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
               {pendingCount}
             </p>
           </div>
@@ -356,131 +322,12 @@ export const PlayerDetail: React.FC = () => {
         )}
       </BFCard>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Jogador</DialogTitle>
-            <DialogDescription>
-              Atualize as informações do jogador
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nome</label>
-              <BFInput
-                className="w-full"
-                value={editForm.name}
-                onChange={(value) => setEditForm({ ...editForm, name: value })}
-                placeholder="Nome completo"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Apelido</label>
-              <BFInput
-                className="w-full"
-                value={editForm.nick}
-                onChange={(value) => setEditForm({ ...editForm, nick: value })}
-                placeholder="Apelido"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <BFInput
-                className="w-full"
-                type="email"
-                value={editForm.email}
-                onChange={(value) => setEditForm({ ...editForm, email: value })}
-                placeholder="email@exemplo.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Telefone</label>
-              <BFInput
-                className="w-full"
-                value={editForm.phone}
-                onChange={(value) => setEditForm({ ...editForm, phone: value })}
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">CPF</label>
-              <BFInput
-                className="w-full"
-                value={editForm.cpf}
-                onChange={(value) => setEditForm({ ...editForm, cpf: value })}
-                placeholder="000.000.000-00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select
-                value={editForm.status}
-                onValueChange={(value: any) => setEditForm({ ...editForm, status: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="suspended">Suspenso</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Função</label>
-              <Select
-                value={editForm.role}
-                onValueChange={(value: any) => setEditForm({ ...editForm, role: value })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">Jogador</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2 sm:col-span-2">
-              <input
-                type="checkbox"
-                id="isGoalie"
-                checked={editForm.isGoalie}
-                onChange={(e) => setEditForm({ ...editForm, isGoalie: e.target.checked })}
-                className="w-4 h-4"
-              />
-              <label htmlFor="isGoalie" className="text-sm font-medium cursor-pointer">
-                É goleiro
-              </label>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <BFButton
-              variant="secondary"
-              onClick={() => setIsEditModalOpen(false)}
-              disabled={isSaving}
-            >
-              Cancelar
-            </BFButton>
-            <BFButton
-              onClick={handleSavePlayer}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Salvando...' : 'Salvar alterações'}
-            </BFButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditPlayerModal
+        player={player}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSavePlayer}
+      />
     </div>
   );
 };

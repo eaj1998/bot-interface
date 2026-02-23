@@ -6,6 +6,7 @@ import { BFTable } from './BF-Table';
 import { BFIcons } from './BF-Icons';
 import { BFPagination } from './BF-Pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Skeleton } from './ui/skeleton';
 
 /**
  * Statistics card configuration
@@ -148,7 +149,11 @@ export function BFListView<T extends { id: string }>({
     return (
         <div className="space-y-6" data-test={dataTest}>
             {/* Header */}
+<<<<<<< HEAD
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+=======
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+>>>>>>> 99abb01b (fix responsiveness)
                 <div>
                     <h1 className="text-[--foreground] mb-2">{title}</h1>
                     <p className="text-[--muted-foreground]">{description}</p>
@@ -253,12 +258,13 @@ export function BFListView<T extends { id: string }>({
 
             {/* Table */}
             <BFCard variant="elevated" padding="none">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="text-center">
-                            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                            <p className="mt-2 text-[--muted-foreground]">Carregando...</p>
-                        </div>
+                {loading && data.length === 0 ? (
+                    <div className="p-6 space-y-4">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="flex items-center gap-4">
+                                <Skeleton className="h-12 w-full" />
+                            </div>
+                        ))}
                     </div>
                 ) : data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12">

@@ -306,18 +306,18 @@ export const UserDashboard: React.FC = () => {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Total Pending */}
-        <BFCard variant="stat" padding="md">
+        <BFCard variant="elevated" padding="md" className="bg-gradient-to-br from-orange-500 to-red-600 border-0">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm sm:text-base text-white/80 mb-1">Pendências</p>
-              <h2 className="text-xl sm:text-2xl text-white">
+              <p className="text-sm sm:text-base text-white/90 font-medium mb-1">Pendências</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
                 R$ {balance.totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </h2>
             </div>
-            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
-              <BFIcons.DollarSign size={20} color="white" className="sm:w-6 sm:h-6" />
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg backdrop-blur-sm">
+              <BFIcons.AlertCircle size={20} color="white" className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </BFCard>
@@ -326,10 +326,10 @@ export const UserDashboard: React.FC = () => {
         <BFCard variant="elevated" padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm sm:text-base text-[--muted-foreground] mb-1">Próximos Jogos</p>
-              <h2 className="text-xl sm:text-2xl text-[--foreground]">{games.length}</h2>
+              <p className="text-sm sm:text-base font-medium text-[--muted-foreground] mb-1">Próximos Jogos</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-[--foreground]">{games.length}</h2>
             </div>
-            <div className="bg-[--accent] p-2 sm:p-3 rounded-lg">
+            <div className="bg-[--primary]/10 p-2 sm:p-3 rounded-lg">
               <BFIcons.Trophy size={20} color="var(--primary)" className="sm:w-6 sm:h-6" />
             </div>
           </div>

@@ -278,7 +278,7 @@ export const ManagePlayers: React.FC = () => {
         rowActions={(row: Player) => (
           <div className="flex items-center gap-2">
             <button
-              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              className="w-11 h-11 flex items-center justify-center flex-shrink-0 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
               title="Ver Detalhes"
               onClick={(e) => {
                 e.stopPropagation();
@@ -286,10 +286,10 @@ export const ManagePlayers: React.FC = () => {
               }}
               data-test={`view-player-${row.id}`}
             >
-              <BFIcons.Eye size={18} color="var(--primary)" />
+              <BFIcons.Eye size={20} color="var(--primary)" />
             </button>
             <button
-              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              className="w-11 h-11 flex items-center justify-center flex-shrink-0 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
               title="Editar"
               onClick={(e) => {
                 e.stopPropagation();
@@ -297,10 +297,10 @@ export const ManagePlayers: React.FC = () => {
               }}
               data-test={`edit-player-${row.id}`}
             >
-              <BFIcons.Edit size={18} color="var(--primary)" />
+              <BFIcons.Edit size={20} color="var(--primary)" />
             </button>
             <button
-              className="p-2 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
+              className="w-11 h-11 flex items-center justify-center flex-shrink-0 hover:bg-[--accent] rounded-md transition-colors cursor-pointer"
               title="Deletar"
               onClick={(e) => {
                 e.stopPropagation();
@@ -308,7 +308,7 @@ export const ManagePlayers: React.FC = () => {
               }}
               data-test={`delete-player-${row.id}`}
             >
-              <BFIcons.Trash2 size={18} color="var(--destructive)" />
+              <BFIcons.Trash2 size={20} color="var(--destructive)" />
             </button>
           </div>
         )}

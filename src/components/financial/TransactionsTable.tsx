@@ -4,8 +4,7 @@ import { BFBadge } from '../BF-Badge';
 import { BFPagination } from '../BF-Pagination';
 import type { BFListViewColumn } from '../BFListView';
 import { Button } from '../ui/button';
-import { Edit, MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Edit } from 'lucide-react';
 
 export interface Transaction {
     id: string;
@@ -107,40 +106,18 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 return (
                     <div className="flex justify-end items-center" onClick={(e) => e.stopPropagation()}>
 
-                        {/* VISÃO DESKTOP: Botões Visíveis (hidden no mobile) */}
-                        <div className="hidden md:flex gap-2">
+                        {/* VISIBLE ACTION (Removed mobile dropdown wrapper to expose interaction per UX guidelines) */}
+                        <div className="flex gap-2">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => onEdit?.(row)}
                                 disabled={isMembership && row.status !== 'OVERDUE'}
-                                className={isMembership && row.status !== 'OVERDUE' ? "opacity-50 cursor-not-allowed" : ""}
+                                className={`h-8 w-8 min-w-[32px] ${isMembership && row.status !== 'OVERDUE' ? "opacity-50 cursor-not-allowed" : ""}`}
                                 title="Editar Transação"
                             >
                                 <Edit size={16} />
                             </Button>
-                        </div>
-
-                        {/* VISÃO MOBILE: Menu Dropdown (visible apenas no mobile) */}
-                        <div className="flex md:hidden">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Abrir menu</span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                    <DropdownMenuItem
-                                        onClick={() => onEdit?.(row)}
-                                        disabled={isMembership && row.status !== 'OVERDUE'}
-                                    >
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        <span>Editar</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
                     </div>
                 );

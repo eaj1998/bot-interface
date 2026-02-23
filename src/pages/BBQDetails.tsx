@@ -13,7 +13,8 @@ import { bbqAPI, playersAPI } from '../lib/axios';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { BFInput } from '../components/BF-Input';
-import { Search } from 'lucide-react';
+import { Search, Check, Banknote } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 
 interface BBQDetailsProps {
     bbqId?: string;
@@ -200,11 +201,11 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                     return;
                 }
                 await bbqAPI.addGuest(bbqId, selectedInviter.id || selectedInviter._id, guestName);
-                toast.success(`✅ Convidado adicionado!`);
+                toast.success(`Convidado adicionado!`);
             } else {
                 if (!player) return;
                 await bbqAPI.addParticipant(bbqId, player.id || player._id, player.name);
-                toast.success(`✅ ${player.name} adicionado!`);
+                toast.success(`${player.name} adicionado(a)!`);
             }
 
             await fetchBBQ();
@@ -325,10 +326,59 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
         }
     ];
 
-    if (loading) return <div>Loading...</div>; // Simplified loading
+    if (loading && !bbq) return (
+        <div className="space-y-6 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-8 w-64" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                    <BFCard variant="default" padding="none" className="overflow-hidden">
+                        <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
+                            <div>
+                                <Skeleton className="h-6 w-48 mb-2" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                            <Skeleton className="h-8 w-24" />
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <Skeleton className="h-4 w-32" />
+                                    </div>
+                                    <Skeleton className="h-8 w-20" />
+                                </div>
+                            ))}
+                        </div>
+                    </BFCard>
+                </div>
+                <div className="space-y-6">
+                    <BFCard variant="elevated" padding="lg">
+                        <div className="mb-6">
+                            <Skeleton className="h-6 w-48 mb-2" />
+                            <Skeleton className="h-4 w-64" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                        </div>
+                        <Skeleton className="h-20 w-full mb-6" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                            <Skeleton className="h-24 w-full" />
+                            <Skeleton className="h-24 w-full" />
+                        </div>
+                        <Skeleton className="h-10 w-full" />
+                    </BFCard>
+                </div>
+            </div>
+        </div>
+    );
     if (!bbq) return <div>Not Found</div>;
 
-    const isReadOnly = bbq.status === 'finished' || bbq.status === 'cancelled';
+    const isReadOnly = bbq.status !== 'open';
     const payingParticipants = bbq.participants.filter(p => !p.isFree).length;
     const freeParticipants = bbq.participants.filter(p => p.isFree).length;
     const projectedRevenue = payingParticipants * ticketPrice;
@@ -336,9 +386,15 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
     const profit = projectedRevenue - totalCost;
 
     return (
+<<<<<<< HEAD
         <div className="space-y-6 p-4 sm:p-6 w-full max-w-full overflow-hidden">
             {/* Header / Nav */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
+=======
+        <div className="space-y-6 p-4 sm:p-6">
+            {/* Header / Nav */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+>>>>>>> 99abb01b (fix responsiveness)
                 <BFButton
                     variant="ghost"
                     icon={<BFIcons.ArrowLeft size={20} />}
@@ -361,7 +417,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                 {/* LEFT COLUMN: PARTICIPANTS */}
                 <div className="space-y-6">
                     <BFCard variant="default" padding="none" className="overflow-hidden">
-                        <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
+                        <div className="p-4 sm:p-6 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h3 className="text-lg font-bold">Lista de Presença</h3>
                                 <p className="text-sm text-[--muted-foreground]">
@@ -386,6 +442,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                 data={bbq.participants}
                                 emptyMessage="Nenhum participante ainda."
                                 actions={(row: BBQParticipant) => {
+<<<<<<< HEAD
                                     return (
                                         <div className="flex flex-row items-center justify-between gap-3 w-full sm:w-auto p-1">
                                             {/* Isento Toggle */}
@@ -444,6 +501,40 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                             </div>
                                         </div>
                                     );
+=======
+                                    if (bbq.status === 'open' && !isReadOnly) {
+                                        return (
+                                            <button
+                                                onClick={() => handleRemoveParticipant(row.userId)}
+                                                className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
+                                                title="Remover"
+                                            >
+                                                <BFIcons.Trash2 size={16} />
+                                            </button>
+                                        );
+                                    }
+                                    if (bbq.status === 'closed' && !row.isFree) {
+                                        return (
+                                            <button
+                                                onClick={() => handleTogglePayment(row.userId, row.isPaid)}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${row.isPaid
+                                                    ? 'bg-green-500/10 text-green-600 border-green-200 hover:bg-green-500/20'
+                                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                                                    }`}
+                                            >
+                                                {row.isPaid ? (
+                                                    <><Check size={14} /> Pago</>
+                                                ) : (
+                                                    <><Banknote size={14} /> Pagar</>
+                                                )}
+                                            </button>
+                                        );
+                                    }
+                                    if (row.isFree) {
+                                        return <span className="text-xs text-green-600 font-medium px-3">Isento</span>;
+                                    }
+                                    return null;
+>>>>>>> 99abb01b (fix responsiveness)
                                 }}
                             />
                         </div>
@@ -457,7 +548,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                         <BFCardContent>
                             <div className="space-y-6">
                                 {/* Costs Inputs */}
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <BFMoneyInput
                                         label="Custos (Carne/Bebida)"
                                         value={meatCostStr}
@@ -484,7 +575,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                 </div>
 
                                 {/* Summary Box */}
-                                <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-4">
                                     <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20">
                                         <p className="text-red-600 dark:text-red-400 font-medium">Custo Total</p>
                                         <p className="text-xl font-bold text-red-700 dark:text-red-300">
@@ -503,7 +594,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                                 </div>
 
                                 {/* Profit/Loss Indicator */}
-                                <div className={`p-3 rounded-lg flex justify-between items-center ${profit >= 0 ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'}`}>
+                                <div className={`p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${profit >= 0 ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'}`}>
                                     <span className="font-medium">Resultado (Caixa):</span>
                                     <span className="font-bold text-lg">
                                         {profit >= 0 ? '+' : ''} R$ {(profit / 100).toFixed(2).replace('.', ',')}

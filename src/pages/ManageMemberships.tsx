@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -359,7 +358,7 @@ const ManageMemberships = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow border-yellow-200 bg-yellow-50/20">
+                <Card className="hover:shadow-md transition-shadow border-yellow-200 dark:border-yellow-900/30">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
                         <Clock className="h-4 w-4 text-yellow-600" />
@@ -372,7 +371,7 @@ const ManageMemberships = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow border-red-200 bg-red-50/20">
+                <Card className="hover:shadow-md transition-shadow border-red-200 dark:border-red-900/30">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Suspensos (Inadimplentes)</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -385,7 +384,7 @@ const ManageMemberships = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow bg-blue-50/10 border-blue-100">
+                <Card className="hover:shadow-md transition-shadow border-blue-200 dark:border-blue-900/30">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Receita Prevista (MRR)</CardTitle>
                         <WalletCards className="h-4 w-4 text-blue-600" />
@@ -404,26 +403,28 @@ const ManageMemberships = () => {
             {/* Filters & Search */}
             <Card className="overflow-hidden">
                 <CardHeader className="pb-3 px-4 md:px-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
-                        <Tabs value={filter} onValueChange={setFilter} className="w-full md:w-auto min-w-0 max-w-full">
-                            <div className="w-full overflow-x-auto pb-2 no-scrollbar">
-                                <TabsList className="inline-flex w-auto min-w-full md:min-w-0 justify-start md:justify-center h-auto p-1">
-                                    <TabsTrigger value="all">Todos</TabsTrigger>
-                                    <TabsTrigger value="active">Em Dia</TabsTrigger>
-                                    <TabsTrigger value="overdue" className="text-yellow-600 data-[state=active]:bg-yellow-100">Devedores</TabsTrigger>
-                                    <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
-                                </TabsList>
-                            </div>
-                        </Tabs>
-
-                        <div className="relative w-full md:w-72 min-w-0">
-                            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+                        <div className="relative w-full sm:flex-1 min-w-0">
+                            <SearchIcon className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar..."
-                                className="pl-9 w-full"
+                                placeholder="Buscar assinante por nome..."
+                                className="pl-10 h-12 w-full text-base rounded-xl"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
+                        </div>
+                        <div className="w-full sm:w-56 shrink-0">
+                            <Select value={filter} onValueChange={setFilter}>
+                                <SelectTrigger className="h-12 w-full text-base rounded-xl bg-background border-input">
+                                    <SelectValue placeholder="Filtrar por Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos os Status</SelectItem>
+                                    <SelectItem value="active">Em Dia</SelectItem>
+                                    <SelectItem value="overdue" className="text-yellow-600 font-medium">Devedores</SelectItem>
+                                    <SelectItem value="cancelled">Cancelados</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardHeader>
