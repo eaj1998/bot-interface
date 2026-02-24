@@ -437,7 +437,7 @@ const NoWorkspace: React.FC = () => {
                                             </Button>
                                         </div>
                                         <div className="bg-background px-4 py-3">
-                                            <code className="font-mono text-sm text-primary font-semibold break-all">
+                                            <code className="font-mono text-sm text-foreground font-semibold break-all">
                                                 {bindCommand}
                                             </code>
                                         </div>

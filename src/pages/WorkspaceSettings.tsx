@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Save, MessageSquare, RefreshCw, Link as LinkIcon, Copy, Tag, Calendar, CircleDollarSign } from 'lucide-react';
+import { Save, MessageSquare, RefreshCw, Link as LinkIcon, Copy, Tag, Calendar, CircleDollarSign, Terminal } from 'lucide-react';
 
 import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
@@ -455,23 +455,31 @@ export const WorkspaceSettings: React.FC = () => {
                                     Para adicionar um novo grupo de pelada a este painel financeiro, adicione nosso bot no seu grupo do WhatsApp e digite o seguinte comando:
                                 </div>
 
-                                <div className="mt-3 flex flex-wrap sm:flex-nowrap items-center gap-2">
-                                    <code className="relative rounded bg-muted px-[0.5rem] py-[0.5rem] font-mono text-sm font-semibold text-foreground break-all">
-                                        /bind {currentWorkspace.id}
-                                    </code>
-                                    <BFButton
-                                        variant="ghost"
-                                        size="icon"
-                                        className="hover:bg-muted/80 shrink-0"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(`/bind ${currentWorkspace.id}`);
-                                            toast.success('Comando copiado!');
-                                        }}
-                                        title="Copiar comando"
-                                        icon={<Copy className="h-4 w-4" />}
-                                    >
-                                        Copiar
-                                    </BFButton>
+                                <div className="mt-3 rounded-lg border border-border/80 overflow-hidden">
+                                    <div className="flex items-center justify-between bg-muted/60 px-3 py-2 border-b border-border/60">
+                                        <div className="flex items-center gap-1.5">
+                                            <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground font-medium">Comando</span>
+                                        </div>
+                                        <BFButton
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs gap-1.5 shrink-0 hover:bg-muted/80"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`/bind ${currentWorkspace.slug || currentWorkspace.id}`);
+                                                toast.success('Comando copiado!');
+                                            }}
+                                            title="Copiar comando"
+                                            icon={<Copy className="h-3.5 w-3.5" />}
+                                        >
+                                            Copiar
+                                        </BFButton>
+                                    </div>
+                                    <div className="bg-background px-4 py-3">
+                                        <code className="font-mono text-sm text-foreground font-semibold break-all">
+                                            /bind {currentWorkspace.slug || currentWorkspace.id}
+                                        </code>
+                                    </div>
                                 </div>
                             </AlertDescription>
                         </Alert>
