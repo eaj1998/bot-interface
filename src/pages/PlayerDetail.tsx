@@ -8,7 +8,7 @@ import { BFIcons } from '../components/BF-Icons';
 import { playersAPI, tokenService } from '../lib/axios';
 import type { Player } from '../lib/types'; // Updated type import
 import { toast } from 'sonner';
-import { EditPlayerModal } from '../components/EditPlayerModal';
+import { PlayerModal } from '../components/PlayerModal';
 
 export const PlayerDetail: React.FC = () => {
   const { playerId } = useParams<{ playerId: string }>();
@@ -322,7 +322,7 @@ export const PlayerDetail: React.FC = () => {
         )}
       </BFCard>
 
-      <EditPlayerModal
+      <PlayerModal
         player={player}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -38,7 +39,7 @@ const ManageMemberships = () => {
     const { currentWorkspace } = useAuth();
     const [loading, setLoading] = useState(true);
     const [memberships, setMemberships] = useState<AdminMembershipListItem[]>([]);
-    const [summary, setSummary] = useState({ totalActive: 0, totalSuspended: 0, totalPending: 0, mrr: 0 });
+    const [summary, setSummary] = useState({ totalActive: 0, totalSuspended: 0, totalOverdue: 0, totalPending: 0, mrr: 0 });
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [page, _setPage] = useState(1);
@@ -69,6 +70,8 @@ const ManageMemberships = () => {
     const [paymentForm, setPaymentForm] = useState({ amount: 0, method: 'pix', description: '' });
     const [createForm, setCreateForm] = useState({ userId: '', planValue: 100, billingDay: 10 });
     const [actionLoading, setActionLoading] = useState(false);
+    const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+    const [suspendReason, setSuspendReason] = useState('');
 
     // Player Search State
     const [searchTerm, setSearchTerm] = useState('');
@@ -198,21 +201,25 @@ const ManageMemberships = () => {
     };
 
     const handleSuspend = (membership: AdminMembershipListItem) => {
-        setConfirmState({
-            open: true,
-            title: `Suspender ${membership.user.name}?`,
-            description: 'O usuário perderá acesso imediato aos jogos futuros até que a assinatura seja reativada.',
-            variant: 'destructive',
-            action: async () => {
-                try {
-                    await membershipsAPI.suspendMembershipAdmin(membership.id, 'Suspenso manualmente pelo admin');
-                    toast.success(`Assinatura de ${membership.user.name} foi suspensa.`);
-                    loadMemberships();
-                } catch (error: any) {
-                    toast.error('Erro ao suspender: ' + (error.response?.data?.message || error.message));
-                }
-            }
-        });
+        setSelectedMembership(membership);
+        setSuspendReason('');
+        setSuspendDialogOpen(true);
+    };
+
+    const handleSuspendSubmit = async () => {
+        if (!selectedMembership) return;
+
+        try {
+            setActionLoading(true);
+            await membershipsAPI.suspendMembershipAdmin(selectedMembership.id, suspendReason || 'Suspenso manualmente pelo admin');
+            toast.success(`Assinatura de ${selectedMembership.user.name} foi suspensa.`);
+            setSuspendDialogOpen(false);
+            loadMemberships();
+        } catch (error: any) {
+            toast.error('Erro ao suspender: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handleCancel = (membership: AdminMembershipListItem) => {
@@ -298,6 +305,7 @@ const ManageMemberships = () => {
     const StatusBadge = ({ status }: { status: string }) => {
         const variants: Record<string, { label: string; className: string }> = {
             ACTIVE: { label: 'Ativo', className: 'bg-green-100 text-green-800 border-green-200' },
+            OVERDUE: { label: 'Inadimplente', className: 'bg-orange-100 text-orange-800 border-orange-200' },
             SUSPENDED: { label: 'Suspenso', className: 'bg-red-100 text-red-800 border-red-200' },
             PENDING: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
             CANCELED_SCHEDULED: { label: 'Cancelado', className: 'bg-red-100 text-red-800 border-red-200' },
@@ -344,7 +352,7 @@ const ManageMemberships = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <Card className="hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Ativos (Em dia)</CardTitle>
@@ -371,15 +379,28 @@ const ManageMemberships = () => {
                     </CardContent>
                 </Card>
 
+                <Card className="hover:shadow-md transition-shadow border-orange-200 dark:border-orange-900/30">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Inadimplentes</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-orange-600">{summary.totalOverdue}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Atrasados
+                        </p>
+                    </CardContent>
+                </Card>
+
                 <Card className="hover:shadow-md transition-shadow border-red-200 dark:border-red-900/30">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Suspensos (Inadimplentes)</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <CardTitle className="text-sm font-medium">Suspensos</CardTitle>
+                        <Ban className="h-4 w-4 text-red-600" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">{summary.totalSuspended}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Ação necessária
+                            Ação disciplinar
                         </p>
                     </CardContent>
                 </Card>
@@ -421,7 +442,8 @@ const ManageMemberships = () => {
                                 <SelectContent>
                                     <SelectItem value="all">Todos os Status</SelectItem>
                                     <SelectItem value="active">Em Dia</SelectItem>
-                                    <SelectItem value="overdue" className="text-yellow-600 font-medium">Devedores</SelectItem>
+                                    <SelectItem value="overdue" className="text-orange-600 font-medium">Inadimplentes</SelectItem>
+                                    <SelectItem value="suspended" className="text-red-600 font-medium">Suspensos</SelectItem>
                                     <SelectItem value="cancelled">Cancelados</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -463,7 +485,8 @@ const ManageMemberships = () => {
                                                 key={membership.id}
                                                 className={
                                                     membership.status === 'SUSPENDED' ? 'bg-red-50 hover:bg-red-100/50' :
-                                                        membership.status === 'PENDING' ? 'bg-yellow-50/30 hover:bg-yellow-100/30' : ''
+                                                        membership.status === 'OVERDUE' ? 'bg-orange-50/50 hover:bg-orange-100/50' :
+                                                            membership.status === 'PENDING' ? 'bg-yellow-50/30 hover:bg-yellow-100/30' : ''
                                                 }
                                             >
                                                 <TableCell>
@@ -543,7 +566,8 @@ const ManageMemberships = () => {
                             <div className="md:hidden divide-y">
                                 {memberships.map((membership) => (
                                     <div key={membership.id} className={`p-4 ${membership.status === 'SUSPENDED' ? 'bg-red-50' :
-                                        membership.status === 'PENDING' ? 'bg-yellow-50/30' : ''
+                                        membership.status === 'OVERDUE' ? 'bg-orange-50/50' :
+                                            membership.status === 'PENDING' ? 'bg-yellow-50/30' : ''
                                         }`}>
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
@@ -850,6 +874,38 @@ const ManageMemberships = () => {
                         <Button onClick={handleCreateSubmit} disabled={actionLoading}>
                             {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Criar Assinatura
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Suspend Membership Dialog */}
+            <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Suspender Assinatura</DialogTitle>
+                        <DialogDescription>
+                            Deseja suspender a assinatura de {selectedMembership?.user.name}? O usuário perderá o acesso imediato aos jogos futuros.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="suspendReason">Motivo da Suspensão / Punição</Label>
+                            <Textarea
+                                id="suspendReason"
+                                placeholder="Descreva o motivo da suspensão (ex: Brigou no último jogo)..."
+                                value={suspendReason}
+                                onChange={(e) => setSuspendReason(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSuspendDialogOpen(false)} disabled={actionLoading}>
+                            Cancelar
+                        </Button>
+                        <Button variant="destructive" onClick={handleSuspendSubmit} disabled={actionLoading}>
+                            {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Suspender
                         </Button>
                     </DialogFooter>
                 </DialogContent>

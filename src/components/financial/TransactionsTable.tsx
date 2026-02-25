@@ -14,7 +14,8 @@ export interface Transaction {
     amount: number;
     description: string;
     status: string;
-    date: string;
+    createdAt: string;
+    dueDate?: string;
     user?: { name: string; phone?: string };
 }
 
@@ -51,9 +52,14 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
 
     const columns: BFListViewColumn<Transaction>[] = [
         {
-            key: 'date',
-            label: 'Data',
-            render: (val: string) => new Date(val).toLocaleDateString('pt-BR')
+            key: 'createdAt',
+            label: 'Data Criação',
+            render: (val: string) => val ? new Date(val).toLocaleDateString('pt-BR') : '-'
+        },
+        {
+            key: 'dueDate',
+            label: 'Vencimento',
+            render: (val: string | undefined) => val ? new Date(val).toLocaleDateString('pt-BR') : '-'
         },
         {
             key: 'user',

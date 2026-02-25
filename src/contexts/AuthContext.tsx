@@ -16,8 +16,14 @@ interface User {
     phone: string;
     role: string;
     status: string;
-    workspaces?: Workspace[];
     isGoalkeeper?: boolean;
+    profile?: {
+        mainPosition?: string;
+        secondaryPositions?: string[];
+        dominantFoot?: string;
+        rating?: number;
+        ratingCount?: number;
+    }
 }
 
 interface AuthContextData {
@@ -73,10 +79,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                     const mappedUser = {
                         ...fullUser,
-                        isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie
+                        isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie,
+                        profile: fullUser.profile
                     };
 
                     setUser(mappedUser);
+                    tokenService.setUser(mappedUser);
                     if (mappedUser.workspaces) {
                         setWorkspaces(mappedUser.workspaces);
                         if (storedWorkspaceId) {
@@ -108,7 +116,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const mappedUser = {
             ...userData,
-            isGoalkeeper: userData.isGoalkeeper ?? userData.isGoalie
+            isGoalkeeper: userData.isGoalkeeper ?? userData.isGoalie,
+            profile: userData.profile
         };
 
         setUser(mappedUser);
@@ -164,7 +173,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const mappedUser = {
                 ...fullUser,
-                isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie
+                isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie,
+                profile: fullUser.profile
             };
 
             setUser(mappedUser);

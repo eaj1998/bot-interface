@@ -266,7 +266,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
         return;
       }
 
-      await gamesAPI.updateGame(gameId, { pricePerPlayer: price });
+      await gamesAPI.updateGame(gameId, { pricePerPlayer: Math.round(price * 100) });
       toast.success('Valor atualizado com sucesso!');
       setIsEditingPrice(false);
       fetchGameDetails();

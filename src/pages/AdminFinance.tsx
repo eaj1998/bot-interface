@@ -165,7 +165,8 @@ export const AdminFinance: React.FC = () => {
                 amount: t.amount,
                 description: t.description || t.notes || '-',
                 status: t.status,
-                date: t.dueDate || t.createdAt,
+                createdAt: t.createdAt,
+                dueDate: t.dueDate,
                 user: t.user || t.userId
             }));
 

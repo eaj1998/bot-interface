@@ -16,6 +16,20 @@ let failedQueue: Array<{
   reject: (error: Error) => void;
 }> = [];
 
+// Helper to fully clear session including backend HTTP-only cookies
+const forceLogout = async () => {
+  try {
+    await axios.post(`${API_BASE_URL}/auth/logout`);
+  } catch (e) {
+    // Ignore error, we're already failing
+  } finally {
+    tokenService.clearTokens();
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }
+};
+
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -39,6 +53,7 @@ export const tokenService = {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('workspaceId');
   },
   getUser: () => {
     const user = localStorage.getItem('user');
@@ -111,14 +126,12 @@ api.interceptors.response.use(
     }
 
     if (originalRequest._retry) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
     if (originalRequest.url?.includes('/auth/refresh')) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -143,8 +156,7 @@ api.interceptors.response.use(
     const refreshToken = tokenService.getRefreshToken();
 
     if (!refreshToken) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -179,8 +191,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError as Error, null);
       isRefreshing = false;
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(refreshError);
     }
   }
@@ -239,12 +250,7 @@ export const authAPI = {
    * Faz logout do usuário
    */
   logout: async () => {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      tokenService.clearTokens();
-      window.location.href = '/login';
-    }
+    await forceLogout();
   },
 
   /**
@@ -622,6 +628,7 @@ export const playersAPI = {
     phoneE164: string;
     nick?: string;
     position?: 'GOALKEEPER' | 'DEFENDER' | 'MIDFIELDER' | 'STRIKER';
+    isGoalie?: boolean;
     type: 'MENSALISTA' | 'AVULSO';
     stars?: number;
     workspaceId: string;

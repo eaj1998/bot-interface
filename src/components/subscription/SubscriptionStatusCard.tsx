@@ -88,8 +88,15 @@ export const SubscriptionStatusCard: React.FC<SubscriptionStatusCardProps> = ({
             showAction = true;
             break;
 
+        case 'OVERDUE' as any:
+            variantStyles = 'bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-800';
+            icon = <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-500" />;
+            title = 'Mensalidade em Atraso';
+            description = 'Você perdeu a prioridade VIP. Regularize sua situação para voltar a ter vaga antecipada.';
+            showAction = true;
+            break;
+
         case 'SUSPENDED':
-        case 'OVERDUE' as any: // Handling potential OVERDUE status mapped from backend
             variantStyles = 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800';
             icon = <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-500" />;
             title = 'Assinatura Suspensa';
@@ -112,7 +119,7 @@ export const SubscriptionStatusCard: React.FC<SubscriptionStatusCardProps> = ({
     }
 
     return (
-        <Card className={`border shadow-sm border-l-4 ${status === 'ACTIVE' ? 'border-l-green-500' : status === 'PENDING' ? 'border-l-yellow-500' : status === 'SUSPENDED' ? 'border-l-red-500' : ''}`}>
+        <Card className={`border shadow-sm border-l-4 ${status === 'ACTIVE' ? 'border-l-green-500' : status === 'PENDING' ? 'border-l-yellow-500' : status === 'OVERDUE' ? 'border-l-orange-500' : status === 'SUSPENDED' ? 'border-l-red-500' : ''}`}>
             <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">

@@ -4,8 +4,7 @@ import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
 import { BFListView } from '../components/BFListView';
 import type { BFListViewColumn, BFListViewStat } from '../components/BFListView';
-import { EditPlayerModal } from '../components/EditPlayerModal';
-import { CreatePlayerModal } from '../components/modals/CreatePlayerModal';
+import { PlayerModal } from '../components/PlayerModal';
 import { playersAPI } from '../lib/axios';
 import type { Player } from '../lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
@@ -22,7 +21,6 @@ export const ManagePlayers: React.FC = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  // const [workspaceId, setWorkspaceId] = useState<string>(''); // Removed redundant state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
@@ -30,12 +28,8 @@ export const ManagePlayers: React.FC = () => {
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Removed redundant fetchWorkspace useEffect
-
   const fetchPlayers = useCallback(async () => {
-    // console.log('[DEBUG] fetchPlayers called, workspaceId:', currentWorkspace?.id);
     if (!currentWorkspace?.id) {
-      // console.log('[DEBUG] No workspaceId, returning early');
       return;
     }
 
@@ -59,12 +53,11 @@ export const ManagePlayers: React.FC = () => {
     fetchPlayers();
   }, [fetchPlayers]);
 
-  // Client-side filtering
   const filteredPlayers = useMemo(() => {
     return allPlayers.filter(player => {
       const matchesSearch =
         player.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        (player.phone && player.phone.includes(debouncedSearchTerm)) || // basic check
+        (player.phone && player.phone.includes(debouncedSearchTerm)) ||
         (player.email && player.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
       const matchesStatus = filterStatus === 'all' || player.status === filterStatus;
@@ -73,7 +66,6 @@ export const ManagePlayers: React.FC = () => {
     });
   }, [allPlayers, debouncedSearchTerm, filterStatus]);
 
-  // Pagination
   const paginatedPlayers = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredPlayers.slice(startIndex, startIndex + pageSize);
@@ -105,21 +97,47 @@ export const ManagePlayers: React.FC = () => {
     }
   };
 
-  const handleSavePlayer = async (updatedData: Partial<Player>) => {
-    if (!playerToEdit) return;
+  const handleSavePlayer = async (formData: any) => {
+    try {
+      if (playerToEdit) {
+        await playersAPI.updatePlayer(playerToEdit.id, {
+          name: formData.name,
+          nick: formData.nick,
+          phoneE164: formData.phone,
+          status: formData.status,
+          isGoalie: formData.isGoalie,
+          role: formData.role,
+          profile: formData.profile,
+        });
+        toast.success('Jogador atualizado com sucesso!');
+      } else {
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+        const res = await playersAPI.createPlayer({
+          name: formData.name,
+          phoneE164: phoneDigits,
+          type: 'AVULSO',
+          nick: formData.nick,
+          position: formData.position || 'MIDFIELDER',
+          isGoalie: formData.profile?.mainPosition === 'GOL',
+          workspaceId: currentWorkspace?.id!
+        });
 
-    await playersAPI.updatePlayer(playerToEdit.id, {
-      name: updatedData.name,
-      nick: updatedData.nick,
-      phoneE164: updatedData.phone,
-      status: updatedData.status,
-      isGoalie: updatedData.isGoalie,
-      role: updatedData.role,
-      profile: updatedData.profile,
-    });
-    toast.success('Jogador atualizado com sucesso!');
-    setPlayerToEdit(null);
-    fetchPlayers();
+        if (formData.profile || formData.status || formData.role) {
+          await playersAPI.updatePlayer(res.id, {
+            status: formData.status,
+            role: formData.role,
+            profile: formData.profile
+          });
+        }
+        toast.success('Jogador criado com sucesso!');
+      }
+      setIsCreateDialogOpen(false);
+      setPlayerToEdit(null);
+      fetchPlayers();
+    } catch (error: any) {
+      console.error('Error saving player:', error);
+      toast.error(error.response?.data?.message || 'Erro ao salvar jogador');
+    }
   };
 
   const formatPhone = (phone: string): string => {
@@ -147,7 +165,6 @@ export const ManagePlayers: React.FC = () => {
     return <BFBadge variant={config.variant}>{config.label}</BFBadge>;
   };
 
-  // Configure statistics for BFListView
   const listStats: BFListViewStat[] = [
     {
       label: 'Total',
@@ -181,7 +198,6 @@ export const ManagePlayers: React.FC = () => {
     },
   ];
 
-  // Configure columns for BFListView
   const columns: BFListViewColumn<Player>[] = [
     {
       key: 'name',
@@ -251,7 +267,7 @@ export const ManagePlayers: React.FC = () => {
         description="Adicione e gerencie jogadores do sistema"
         createButton={{
           label: 'Novo Jogador',
-          onClick: () => setIsCreateDialogOpen(true),
+          onClick: () => { setPlayerToEdit(null); setIsCreateDialogOpen(true); },
         }}
         stats={listStats}
         searchPlaceholder="Buscar por nome ou telefone..."
@@ -322,15 +338,6 @@ export const ManagePlayers: React.FC = () => {
         dataTest="manage-players"
       />
 
-      {/* Create Player Modal */}
-      <CreatePlayerModal
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        workspaceId={currentWorkspace?.id || ''}
-        onSuccess={fetchPlayers}
-      />
-
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!playerToDelete} onOpenChange={() => setPlayerToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -353,10 +360,13 @@ export const ManagePlayers: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <EditPlayerModal
+      <PlayerModal
         player={playerToEdit}
-        isOpen={!!playerToEdit}
-        onClose={() => setPlayerToEdit(null)}
+        isOpen={isCreateDialogOpen || !!playerToEdit}
+        onClose={() => {
+          setIsCreateDialogOpen(false);
+          setPlayerToEdit(null);
+        }}
         onSave={handleSavePlayer}
       />
     </>

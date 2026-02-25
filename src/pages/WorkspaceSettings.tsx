@@ -291,6 +291,7 @@ export const WorkspaceSettings: React.FC = () => {
     // General Tab States
     const [workspaceName, setWorkspaceName] = useState('');
     const [enablePriority, setEnablePriority] = useState(false);
+    const [workspacePix, setWorkspacePix] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     // Fetch Chats Logic
@@ -309,11 +310,11 @@ export const WorkspaceSettings: React.FC = () => {
         }
     };
 
-    // Populate General Settings when currentWorkspace changes
     useEffect(() => {
         if (currentWorkspace) {
             setWorkspaceName(currentWorkspace.name);
             setEnablePriority(currentWorkspace.settings?.enableMemberPriority ?? false);
+            setWorkspacePix(currentWorkspace.settings?.pix ?? '');
         }
         fetchChats();
     }, [currentWorkspace]);
@@ -330,7 +331,8 @@ export const WorkspaceSettings: React.FC = () => {
                 settings: {
                     // Start basic settings if null
                     ...currentWorkspace.settings,
-                    enableMemberPriority: enablePriority
+                    enableMemberPriority: enablePriority,
+                    pix: workspacePix
                 }
             });
 
@@ -391,6 +393,20 @@ export const WorkspaceSettings: React.FC = () => {
                                         fullWidth
                                         placeholder="Ex: Futebol de Quinta"
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="ws-pix">Chave Pix do Grupo (Mensalidades e Taxas do Bot)</Label>
+                                    <BFInput
+                                        id="ws-pix"
+                                        value={workspacePix}
+                                        onChange={(value) => setWorkspacePix(value)}
+                                        fullWidth
+                                        placeholder="Ex: 123.456.789-00 ou seu@email.com"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Essa é a chave Pix usada para recebimento das mensalidades VIP pelo painel de controle.
+                                    </p>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-4 shadow-sm gap-4">
