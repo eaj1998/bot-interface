@@ -1,0 +1,27 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FAFF"/>
+      <stop offset="1" stop-color="#EFFFF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="760" rx="32" fill="url(#bg)"/>
+  <rect x="80" y="70" width="1040" height="620" rx="24" fill="white" stroke="#D8E2F0" stroke-width="2"/>
+  <text x="120" y="148" font-family="Inter, Arial" font-size="34" font-weight="700" fill="#0A1628">Lista do Jogo • Quinta 20:00</text>
+  <rect x="120" y="186" width="260" height="46" rx="12" fill="#00D66F" fill-opacity="0.18"/>
+  <text x="150" y="216" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#008A47">28 Confirmados</text>
+  <rect x="400" y="186" width="220" height="46" rx="12" fill="#0066FF" fill-opacity="0.14"/>
+  <text x="430" y="216" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#0050C7">6 Reservas</text>
+  <rect x="120" y="260" width="960" height="56" rx="12" fill="#0A1628" fill-opacity="0.04"/>
+  <rect x="120" y="332" width="960" height="56" rx="12" fill="#0A1628" fill-opacity="0.04"/>
+  <rect x="120" y="404" width="960" height="56" rx="12" fill="#0A1628" fill-opacity="0.04"/>
+  <rect x="120" y="476" width="960" height="56" rx="12" fill="#0A1628" fill-opacity="0.04"/>
+  <text x="145" y="296" font-family="Inter, Arial" font-size="24" font-weight="600" fill="#0A1628">Lucas Ferreira</text>
+  <text x="145" y="368" font-family="Inter, Arial" font-size="24" font-weight="600" fill="#0A1628">Rafael Costa</text>
+  <text x="145" y="440" font-family="Inter, Arial" font-size="24" font-weight="600" fill="#0A1628">Thiago Nunes</text>
+  <text x="145" y="512" font-family="Inter, Arial" font-size="24" font-weight="600" fill="#0A1628">Gustavo Lima</text>
+  <text x="780" y="296" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#008A47">Confirmado</text>
+  <text x="780" y="368" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#008A47">Confirmado</text>
+  <text x="780" y="440" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#0050C7">Reserva</text>
+  <text x="780" y="512" font-family="Inter, Arial" font-size="22" font-weight="700" fill="#008A47">Confirmado</text>
+</svg>

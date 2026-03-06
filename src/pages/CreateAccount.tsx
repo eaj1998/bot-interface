@@ -11,7 +11,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 
 type LoginStep = 'phone' | 'otp';
 
-export const Login: React.FC = () => {
+export const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuthContext();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -271,7 +271,7 @@ export const Login: React.FC = () => {
   return (
     <div
       className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-[var(--bf-navy)] via-[var(--bf-navy-light)] to-[var(--bf-blue-primary)] flex items-center justify-center px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)]"
-      data-test="login-page"
+      data-test="create-account-page"
     >
       {/* Card principal */}
       <div className="w-full max-w-md">
@@ -283,12 +283,12 @@ export const Login: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl text-white mb-2">
-            Bem-vindo ao Faz o Simples
+            Crie sua conta no Faz o Simples
           </h1>
           <p className="text-blue-200">
             {step === 'phone'
-              ? 'Entre com seu número de telefone'
-              : 'Digite o código de verificação'
+              ? 'Comece com seu número de telefone para criar a conta'
+              : 'Digite o código para concluir seu cadastro'
             }
           </p>
         </div>
@@ -328,6 +328,12 @@ export const Login: React.FC = () => {
           {/* ETAPA 1: Telefone */}
           {step === 'phone' && (
             <div className="space-y-6" data-test="phone-step">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
+                <p className="text-sm text-blue-700">
+                  Você está criando uma nova conta para acessar o painel da sua pelada.
+                </p>
+              </div>
+
               <BFPhoneInput
                 value={phone}
                 onChange={setPhone}
@@ -426,7 +432,7 @@ export const Login: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-blue-200 mt-6">
-          Ao continuar, você concorda com nossos{' '}
+          Ao continuar, você cria sua conta e concorda com nossos{' '}
           <button className="underline hover:text-white transition-colors">
             Termos de Uso
           </button>
@@ -436,4 +442,4 @@ export const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default CreateAccount;

@@ -1,10 +1,10 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
-import { RootRedirect } from '../components/RootRedirect';
 
 import AppLayout from '../layouts/AppLayout';
 
 import { Login } from '../pages/Login';
+import { CreateAccount } from '../pages/CreateAccount';
 
 import { AdminDashboard } from '../pages/AdminDashboard';
 import { ManageGames } from '../pages/ManageGames';
@@ -25,11 +25,16 @@ import { BBQDetails } from '@/pages/BBQDetails';
 import { SelectWorkspace } from '../pages/SelectWorkspace';
 import NoWorkspace from '../pages/NoWorkspace';
 import { HelpPage } from '../pages/HelpPage';
+import { LandingPage } from '../pages/LandingPage';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/criar-conta',
+    element: <CreateAccount />,
   },
   {
     path: '/select-workspace',
@@ -146,7 +151,7 @@ export const router = createBrowserRouter([
 
   {
     path: '/',
-    element: <RootRedirect />,
+    element: <LandingPage />,
   },
 
   {

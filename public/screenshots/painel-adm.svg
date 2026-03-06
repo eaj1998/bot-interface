@@ -1,0 +1,53 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#071735"/>
+  <rect x="36" y="36" width="260" height="688" rx="16" fill="#0A1E42"/>
+  <rect x="56" y="72" width="220" height="48" rx="10" fill="#0F2A57"/>
+  <text x="72" y="102" font-family="Inter, Arial" font-size="20" font-weight="700" fill="#F4F8FF">Faz o Simples FC</text>
+
+  <rect x="56" y="150" width="220" height="44" rx="10" fill="#63D978"/>
+  <text x="80" y="178" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#0A1E42">Dashboard</text>
+
+  <rect x="56" y="212" width="220" height="34" rx="8" fill="#112D5A"/>
+  <rect x="56" y="258" width="220" height="34" rx="8" fill="#112D5A"/>
+  <rect x="56" y="304" width="220" height="34" rx="8" fill="#112D5A"/>
+  <rect x="56" y="350" width="220" height="34" rx="8" fill="#112D5A"/>
+
+  <rect x="326" y="36" width="838" height="688" rx="16" fill="#081C3B"/>
+  <text x="362" y="86" font-family="Inter, Arial" font-size="32" font-weight="700" fill="#F4F8FF">Dashboard Administrativo</text>
+
+  <rect x="362" y="116" width="200" height="94" rx="14" fill="#172E55"/>
+  <rect x="580" y="116" width="200" height="94" rx="14" fill="#172E55"/>
+  <rect x="798" y="116" width="200" height="94" rx="14" fill="#63D978"/>
+  <rect x="1016" y="116" width="130" height="94" rx="14" fill="#172E55"/>
+
+  <text x="382" y="148" font-family="Inter, Arial" font-size="16" fill="#B9CAE5">Caixa (Saldo)</text>
+  <text x="382" y="182" font-family="Inter, Arial" font-size="28" font-weight="700" fill="#F4F8FF">R$ 5,04</text>
+
+  <text x="600" y="148" font-family="Inter, Arial" font-size="16" fill="#B9CAE5">A Receber</text>
+  <text x="600" y="182" font-family="Inter, Arial" font-size="28" font-weight="700" fill="#F4F8FF">R$ 69,00</text>
+
+  <text x="818" y="148" font-family="Inter, Arial" font-size="16" fill="#0A1E42">Membros</text>
+  <text x="818" y="182" font-family="Inter, Arial" font-size="28" font-weight="700" fill="#0A1E42">18</text>
+
+  <text x="1034" y="148" font-family="Inter, Arial" font-size="16" fill="#B9CAE5">Jogos</text>
+  <text x="1034" y="182" font-family="Inter, Arial" font-size="28" font-weight="700" fill="#F4F8FF">24</text>
+
+  <rect x="362" y="232" width="392" height="454" rx="14" fill="#172E55"/>
+  <rect x="772" y="232" width="374" height="454" rx="14" fill="#172E55"/>
+
+  <text x="386" y="270" font-family="Inter, Arial" font-size="24" font-weight="700" fill="#F4F8FF">Jogos Recentes</text>
+  <rect x="386" y="296" width="344" height="2" fill="#2D4268"/>
+  <rect x="386" y="322" width="344" height="54" rx="10" fill="#1B365F"/>
+  <rect x="386" y="390" width="344" height="54" rx="10" fill="#1B365F"/>
+  <rect x="386" y="458" width="344" height="54" rx="10" fill="#1B365F"/>
+  <rect x="386" y="526" width="344" height="54" rx="10" fill="#1B365F"/>
+
+  <text x="796" y="270" font-family="Inter, Arial" font-size="24" font-weight="700" fill="#F4F8FF">Débitos Recentes</text>
+  <rect x="796" y="296" width="326" height="2" fill="#2D4268"/>
+  <rect x="796" y="322" width="326" height="54" rx="10" fill="#1B365F"/>
+  <rect x="796" y="390" width="326" height="54" rx="10" fill="#1B365F"/>
+  <rect x="796" y="458" width="326" height="54" rx="10" fill="#1B365F"/>
+  <rect x="796" y="526" width="326" height="54" rx="10" fill="#1B365F"/>
+
+  <text x="386" y="656" font-family="Inter, Arial" font-size="16" fill="#9AB1D6">Visão completa de jogos, membros e financeiro em um único painel.</text>
+</svg>
