@@ -400,7 +400,7 @@ const NoWorkspace: React.FC = () => {
                                     <div className="mt-3 inline-flex items-center gap-2 bg-muted rounded-lg px-3 py-2">
                                         <Smartphone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                         <span className="font-mono font-semibold text-sm tracking-wide select-all">
-                                            (11) 99999-9999
+                                            (49) 98842-1373
                                         </span>
                                     </div>
                                 </div>
