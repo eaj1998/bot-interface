@@ -121,7 +121,7 @@ const ManageMemberships = () => {
             variant: 'default',
             action: async () => {
                 try {
-                    const response = await membershipsAPI.processMonthlyBilling();
+                    const response = await membershipsAPI.processMonthlyBilling(currentWorkspace?.id || '');
                     toast.success(response.message || 'Faturamento processado com sucesso!');
                     loadMemberships();
                 } catch (error: any) {
@@ -138,7 +138,8 @@ const ManageMemberships = () => {
                 page,
                 limit: 20,
                 filter,
-                search
+                search,
+                workspaceId: currentWorkspace?.id,
             });
             setMemberships(response.memberships);
             setSummary(response.summary);
@@ -260,6 +261,7 @@ const ManageMemberships = () => {
             await membershipsAPI.createMembership({
                 userId: createForm.userId,
                 planValue: createForm.planValue,
+                workspaceId: currentWorkspace?.id || '',
             });
             toast.success('✅ Mensalista adicionado com sucesso!');
             setCreateDialogOpen(false);

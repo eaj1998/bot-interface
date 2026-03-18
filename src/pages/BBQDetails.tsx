@@ -4,11 +4,9 @@ import { BFCard, BFCardHeader, BFCardContent } from '../components/BF-Card';
 import { BFButton } from '../components/BF-Button';
 import { BFMoneyInput } from '../components/BF-MoneyInput';
 import { BFBadge } from '../components/BF-Badge';
-import { BFTable } from '../components/BF-Table';
 import { BFIcons } from '../components/BF-Icons';
 import { formatEventDate } from '../lib/dateUtils';
 import type { BBQResponseDto, BBQParticipant } from '../lib/types';
-import type { BFTableColumn } from '../components/BF-Table';
 import { bbqAPI, playersAPI } from '../lib/axios';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
@@ -180,7 +178,7 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
         try {
             setSearchingPlayers(true);
             const response = await playersAPI.searchPlayers(search);
-            setSearchResults(response.players || []);
+            setSearchResults(response.data || response.players || []);
         } catch (error: any) {
             console.error('Error searching players:', error);
             toast.error('Erro ao buscar jogadores');
@@ -234,11 +232,27 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
     };
 
     const handleTogglePayment = async (userId: string, currentStatus: boolean) => {
-        if (!bbqId) return;
+        if (!bbqId || !bbq) return;
         try {
             setUpdating(true);
-            await bbqAPI.toggleParticipantPayment(bbqId, userId, !currentStatus);
+            const newIsPaid = !currentStatus;
+            await bbqAPI.toggleParticipantPayment(bbqId, userId, newIsPaid);
             toast.success(`Pagamento atualizado!`);
+
+            // Check if all non-free participants have now paid → auto-finish
+            if (newIsPaid) {
+                const updatedParticipants = bbq.participants.map(p =>
+                    p.userId === userId ? { ...p, isPaid: true } : p
+                );
+                const payingParticipants = updatedParticipants.filter(p => !p.isFree);
+                const allPaid = payingParticipants.length > 0 && payingParticipants.every(p => p.isPaid);
+
+                if (allPaid) {
+                    await bbqAPI.updateStatus(bbqId, 'finished');
+                    toast.success('Todos pagaram! Churrasco finalizado.');
+                }
+            }
+
             await fetchBBQ();
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Erro ao atualizar pagamento');
@@ -294,37 +308,6 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
         return <BFBadge variant={config.variant} size="lg">{config.label}</BFBadge>;
     };
 
-    // Columns
-    const participantColumns: BFTableColumn<BBQParticipant>[] = [
-        {
-            key: 'userName',
-            label: 'Participante',
-            render: (_: any, row: BBQParticipant) => (
-                <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold">
-                            {row.userName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <p className={`text-[--foreground] font-medium ${row.isFree ? 'line-through opacity-70' : ''}`}>{row.userName}</p>
-                                {row.isFree && (
-                                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full border border-green-200 uppercase font-bold tracking-wide">
-                                        Isento
-                                    </span>
-                                )}
-                            </div>
-                            {row.invitedBy && row.invitedByName && (
-                                <p className="text-[--muted-foreground] text-xs mt-0.5">
-                                    Convidado por {row.invitedByName}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-    ];
 
     if (loading && !bbq) return (
         <div className="space-y-6 p-4 sm:p-6">
@@ -430,72 +413,85 @@ export const BBQDetails: React.FC<BBQDetailsProps> = ({ bbqId: propBbqId, onBack
                             )}
                         </div>
 
-                        <div className="w-full">
-                            <BFTable
-                                columns={participantColumns}
-                                data={bbq.participants}
-                                emptyMessage="Nenhum participante ainda."
-                                actions={(row: BBQParticipant) => {
-                                    return (
-                                        <div className="flex flex-row items-center justify-between gap-3 w-full sm:w-auto p-1">
-                                            {/* Isento Toggle */}
-                                            {(!isReadOnly) && (
-                                                <div className="flex items-center gap-2 cursor-pointer touch-manipulation">
-                                                    <button
-                                                        type="button"
-                                                        role="switch"
-                                                        aria-checked={row.isFree}
-                                                        onClick={() => handleToggleFree(row.userId, !!row.isFree)}
-                                                        className={`
-                                                            relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-                                                            ${row.isFree ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}
-                                                        `}
-                                                        title={row.isFree ? "Remover isenção" : "Marcar como isento"}
-                                                    >
-                                                        <span className="sr-only">Isento</span>
-                                                        <span
-                                                            aria-hidden="true"
-                                                            className={`
-                                                                pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-                                                                ${row.isFree ? 'translate-x-5' : 'translate-x-0'}
-                                                            `}
-                                                        />
-                                                    </button>
-                                                    <span className="text-sm font-medium text-foreground select-none">Isento</span>
-                                                </div>
+                        <div className="divide-y divide-[var(--border)]">
+                            {bbq.participants.length === 0 && (
+                                <p className="text-center text-[--muted-foreground] py-8">Nenhum participante ainda.</p>
+                            )}
+                            {bbq.participants.map((row: BBQParticipant) => (
+                                <div key={row.userId} className="flex items-center gap-3 px-4 py-3">
+                                    {/* Avatar */}
+                                    <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center text-white font-bold">
+                                        {row.userName.charAt(0).toUpperCase()}
+                                    </div>
+
+                                    {/* Name + guest note */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className={`text-[--foreground] font-medium truncate ${row.isFree ? 'line-through opacity-70' : ''}`}>
+                                                {row.userName}
+                                            </p>
+                                            {row.isFree && (
+                                                <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full border border-green-200 uppercase font-bold tracking-wide flex-shrink-0">
+                                                    Isento
+                                                </span>
                                             )}
-
-                                            {/* Container right aligned actions */}
-                                            <div className="flex items-center gap-2 ml-auto shrink-0">
-                                                {/* Pagar Button (Closed) */}
-                                                {(bbq.status === 'closed' && !row.isFree) && (
-                                                    <button
-                                                        onClick={() => handleTogglePayment(row.userId, row.isPaid)}
-                                                        className={`flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-sm font-semibold transition-all border shadow-sm select-none
-                                                            ${row.isPaid
-                                                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700'
-                                                            }`}
-                                                    >
-                                                        {row.isPaid ? '✅ Pago' : '💲 Pagar'}
-                                                    </button>
-                                                )}
-
-                                                {/* Remove Button (Open) */}
-                                                {(bbq.status === 'open' && !isReadOnly) && (
-                                                    <button
-                                                        onClick={() => handleRemoveParticipant(row.userId)}
-                                                        className="flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-md transition-colors shadow-sm border border-red-100 dark:border-red-900/30"
-                                                        title="Remover participante"
-                                                    >
-                                                        <BFIcons.Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
                                         </div>
-                                    );
-                                }}
-                            />
+                                        {row.invitedBy && row.invitedByName && (
+                                            <p className="text-[--muted-foreground] text-xs mt-0.5">
+                                                Convidado por {row.invitedByName}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {/* Isento toggle (open only) */}
+                                        {!isReadOnly && (
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={row.isFree}
+                                                onClick={() => handleToggleFree(row.userId, !!row.isFree)}
+                                                title={row.isFree ? 'Remover isenção' : 'Marcar como isento'}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary
+                                                    ${row.isFree ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                            >
+                                                <span className="sr-only">Isento</span>
+                                                <span
+                                                    aria-hidden="true"
+                                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200
+                                                        ${row.isFree ? 'translate-x-5' : 'translate-x-0'}`}
+                                                />
+                                            </button>
+                                        )}
+
+                                        {/* Pay button (closed only) */}
+                                        {bbq.status === 'closed' && !row.isFree && (
+                                            <button
+                                                onClick={() => handleTogglePayment(row.userId, row.isPaid)}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold border transition-all
+                                                    ${row.isPaid
+                                                        ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                                        : 'bg-card text-[--foreground] border-[--border] hover:bg-accent'
+                                                    }`}
+                                            >
+                                                {row.isPaid ? '✅ Pago' : '💲 Pagar'}
+                                            </button>
+                                        )}
+
+                                        {/* Remove button (open only) */}
+                                        {bbq.status === 'open' && !isReadOnly && (
+                                            <button
+                                                onClick={() => handleRemoveParticipant(row.userId)}
+                                                title="Remover participante"
+                                                className="p-2 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-100 dark:border-red-900/30 transition-colors"
+                                            >
+                                                <BFIcons.Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </BFCard>
                 </div>

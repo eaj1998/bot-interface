@@ -58,11 +58,11 @@ export const UserDashboard: React.FC = () => {
 
         // Execute requests in parallel
         const [membershipResponse, balanceData, gamesResponse] = await Promise.all([
-          membershipsAPI.getMyMembership().catch(err => {
+          membershipsAPI.getMyMembership(currentWorkspace.id).catch(err => {
             console.log('No membership found or error', err);
             return null;
           }),
-          transactionsAPI.getMyBalance().catch(err => {
+          transactionsAPI.getMyBalance(currentWorkspace.id).catch(err => {
             console.error('Error fetching balance', err);
             return { totalPending: 0, history: [] }; // Fallback
           }),
@@ -143,10 +143,10 @@ export const UserDashboard: React.FC = () => {
     // Refresh balance and membership
     if (currentWorkspace?.id) {
       try {
-        const balanceData = await transactionsAPI.getMyBalance();
+        const balanceData = await transactionsAPI.getMyBalance(currentWorkspace.id);
         setBalance(balanceData);
 
-        const mResponse = await membershipsAPI.getMyMembership();
+        const mResponse = await membershipsAPI.getMyMembership(currentWorkspace.id);
         let mData = mResponse;
         if (mData.data) mData = mData.data;
         if (mData.membership) mData = mData.membership;

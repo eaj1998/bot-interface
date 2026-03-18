@@ -76,7 +76,7 @@ export const CreateTransactionModal: React.FC<CreateTransactionModalProps> = ({
         try {
             setSearchingPlayers(true);
             const response = await playersAPI.searchPlayers(search);
-            setSearchResults(response.players || []);
+            setSearchResults(response.data || response.players || []);
         } catch (error) {
             console.error(error);
         } finally {

@@ -122,7 +122,7 @@ export const AddCredit: React.FC<AddCreditProps> = ({ onBack }) => {
         setSearchingPlayers(true);
         try {
           const response = await playersAPI.searchPlayers(playerSearchTerm);
-          setPlayerSearchResults(response.players || []);
+          setPlayerSearchResults(response.data || response.players || []);
         } catch (error) {
           console.error('Erro ao buscar jogadores:', error);
         } finally {

@@ -860,6 +860,13 @@ export const bbqAPI = {
     return response.data;
   },
 
+  /**
+   * Atualiza status do churrasco
+   */
+  updateStatus: async (bbqId: string, status: 'open' | 'closed' | 'finished' | 'cancelled') => {
+    const response = await api.patch(`/bbq/${bbqId}/status`, { status });
+    return response.data;
+  },
 
 };
 
@@ -871,8 +878,8 @@ export const membershipsAPI = {
   /**
    * Busca a assinatura do usuário autenticado
    */
-  getMyMembership: async () => {
-    const response = await api.get(`/memberships/my`);
+  getMyMembership: async (workspaceId: string) => {
+    const response = await api.get(`/memberships/my`, { params: { workspaceId } });
     return response.data;
   },
 
@@ -880,7 +887,7 @@ export const membershipsAPI = {
    * Cria uma nova assinatura
    */
 
-  createMembership: async (data: { userId: string; planValue: number }) => {
+  createMembership: async (data: { userId: string; planValue: number; workspaceId: string }) => {
     const response = await api.post('/memberships/admin/create', data);
     return response.data;
   },
@@ -908,7 +915,7 @@ export const membershipsAPI = {
     const response = await api.patch(`/memberships/${membershipId}/reactivate`, { notes });
     return response.data;
   },
-  getAdminList: async (params: { page?: number; limit?: number; filter?: string; search?: string }) => {
+  getAdminList: async (params: { page?: number; limit?: number; filter?: string; search?: string; workspaceId?: string }) => {
     const response = await api.get('/memberships/admin/list', { params });
     return response.data;
   },
@@ -928,8 +935,8 @@ export const membershipsAPI = {
     const response = await api.post(`/memberships/${id}/cancel`, { immediate });
     return response.data;
   },
-  processMonthlyBilling: async () => {
-    const response = await api.post('/memberships/admin/process-billing');
+  processMonthlyBilling: async (workspaceId: string) => {
+    const response = await api.post('/memberships/admin/process-billing', { workspaceId });
     return response.data;
   },
 };
@@ -958,8 +965,8 @@ export const transactionsAPI = {
   /**
    * Busca o saldo financeiro do usuário
    */
-  getMyBalance: async () => {
-    const response = await api.get('/transactions/balance');
+  getMyBalance: async (workspaceId: string) => {
+    const response = await api.get('/transactions/balance', { params: { workspaceId } });
     return response.data;
   },
 

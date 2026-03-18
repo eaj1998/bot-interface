@@ -3,6 +3,13 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { BFSidebar, BFSidebarItem } from '../components/BF-Sidebar';
 import { BFIcons } from '../components/BF-Icons';
 import { useAuth } from '../hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 
 export default function AppLayout() {
@@ -10,7 +17,6 @@ export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState('dashboard');
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -213,6 +219,22 @@ export default function AppLayout() {
 
 
 
+  const getPageTitle = (pathname: string): string => {
+    if (pathname.startsWith('/admin/games')) return 'Jogos';
+    if (pathname.startsWith('/admin/players')) return 'Jogadores';
+    if (pathname.startsWith('/admin/bbq')) return 'Churrascos';
+    if (pathname.startsWith('/admin/chats')) return 'Chats';
+    if (pathname.startsWith('/admin/memberships')) return 'Membros';
+    if (pathname.startsWith('/admin/finance')) return 'Financeiro';
+    if (pathname.startsWith('/admin/settings')) return 'Configurações';
+    if (pathname.startsWith('/admin/my-dashboard')) return 'Meu Painel';
+    if (pathname.startsWith('/admin/my-profile')) return 'Meu Perfil';
+    if (pathname.startsWith('/admin/dashboard')) return 'Dashboard';
+    if (pathname.startsWith('/user/profile')) return 'Meu Perfil';
+    if (pathname.startsWith('/user/dashboard')) return 'Meu Painel';
+    return 'Faz o Simples';
+  };
+
   const formatPhone = (phone: string): string => {
     if (!phone) return '';
 
@@ -250,101 +272,73 @@ export default function AppLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <header className="sticky top-0 z-40 bg-background border-b border-border shadow-sm">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6">
             {/* Left Side - Mobile Menu + Title */}
             <div className="flex items-center gap-3">
               {/* Mobile Menu Button */}
               <button
-                className="lg:hidden p-3 rounded-lg hover:bg-[--accent] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="lg:hidden p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="Abrir Menu"
               >
                 <BFIcons.Menu size={20} className="text-[--foreground]" />
               </button>
 
+              {/* App name on sm+, current page on mobile */}
               <div className="hidden sm:block">
                 <h2 className="text-base font-semibold text-[--foreground]">Faz o Simples</h2>
               </div>
+              <div className="sm:hidden">
+                <h2 className="text-base font-semibold text-[--foreground]">{getPageTitle(location.pathname)}</h2>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {/* Theme Toggle - always visible */}
+              <button
+                onClick={toggleTheme}
+                aria-label={isDarkMode ? 'Ativar tema claro' : 'Ativar tema escuro'}
+                className="p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                {isDarkMode
+                  ? <BFIcons.Sun size={20} className="text-[--muted-foreground]" />
+                  : <BFIcons.Moon size={20} className="text-[--muted-foreground]" />
+                }
+              </button>
 
               {/* Settings Dropdown */}
-              <div className="relative">
-                <button
-                  className="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                  aria-label="Configurações"
-                >
-                  <BFIcons.Settings size={20} className="text-[--muted-foreground] group-hover:text-[--foreground]" />
-                </button>
-
-                {/* Settings Dropdown Menu */}
-                {showSettingsMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowSettingsMenu(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-2 z-50">
-                      {/* Theme Toggle */}
-                      <div className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {isDarkMode ? (
-                              <BFIcons.Moon size={18} className="text-[--muted-foreground]" />
-                            ) : (
-                              <BFIcons.Sun size={18} className="text-[--muted-foreground]" />
-                            )}
-                            <span className="text-sm text-[--foreground]">
-                              {isDarkMode ? 'Tema Escuro' : 'Tema Claro'}
-                            </span>
-                          </div>
-                          <button
-                            onClick={toggleTheme}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${isDarkMode ? 'bg-primary' : 'bg-gray-200'
-                              }`}
-                          >
-                            <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-gray-200 dark:border-gray-800 my-1" />
-
-                      {/* Other Settings Options */}
-                      <button
-                        className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 cursor-pointer group"
-                        onClick={() => {
-                          setShowSettingsMenu(false);
-                          navigate('/user/profile');
-                        }}
-                      >
-                        <BFIcons.User size={18} className="text-[--muted-foreground] group-hover:text-[--foreground] transition-colors" />
-                        <span className="text-sm text-[--foreground]">Meu Perfil</span>
-                      </button>
-
-                      <div className="border-t border-gray-200 dark:border-gray-800 my-1" />
-
-                      <button
-                        className="w-full px-4 py-2.5 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-3 cursor-pointer text-red-600 dark:text-red-400 group"
-                        onClick={async () => {
-                          setShowSettingsMenu(false);
-                          const { authAPI } = await import('../lib/axios');
-                          await authAPI.logout();
-                        }}
-                      >
-                        <BFIcons.LogOut size={18} />
-                        <span className="text-sm font-medium">Sair</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Configurações"
+                  >
+                    <BFIcons.Settings size={20} className="text-[--muted-foreground]" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={() => navigate('/user/profile')}
+                  >
+                    <BFIcons.User size={18} />
+                    <span>Meu Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    variant="destructive"
+                    onSelect={async () => {
+                      const { authAPI } = await import('../lib/axios');
+                      await authAPI.logout();
+                    }}
+                  >
+                    <BFIcons.LogOut size={18} />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

@@ -40,7 +40,7 @@ export const ManagePlayers: React.FC = () => {
         page: 1
       });
 
-      setAllPlayers(response.data || []);
+      setAllPlayers(response.data || response.players || []);
     } catch (error: any) {
       console.error('Error fetching players:', error);
       toast.error(error.response?.data?.message || 'Erro ao carregar jogadores');
