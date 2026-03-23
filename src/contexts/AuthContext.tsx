@@ -16,8 +16,14 @@ interface User {
     phone: string;
     role: string;
     status: string;
-    workspaces?: Workspace[];
     isGoalkeeper?: boolean;
+    profile?: {
+        mainPosition?: string;
+        secondaryPositions?: string[];
+        dominantFoot?: string;
+        rating?: number;
+        ratingCount?: number;
+    }
 }
 
 interface AuthContextData {
@@ -73,15 +79,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                     const mappedUser = {
                         ...fullUser,
-                        isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie
+                        isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie,
+                        profile: fullUser.profile
                     };
 
                     setUser(mappedUser);
+                    tokenService.setUser(mappedUser);
                     if (mappedUser.workspaces) {
                         setWorkspaces(mappedUser.workspaces);
                         if (storedWorkspaceId) {
                             const found = mappedUser.workspaces.find((w: Workspace) => w.id === storedWorkspaceId);
-                            if (found) setCurrentWorkspace(found);
+                            if (found) {
+                                setCurrentWorkspace(found);
+                            } else {
+                                // Stored workspace is no longer valid (user removed, etc.)
+                                setCurrentWorkspace(null);
+                                localStorage.removeItem('workspaceId');
+                            }
                         } else if (mappedUser.workspaces.length === 1) {
                             setCurrentWorkspace(mappedUser.workspaces[0]);
                         }
@@ -96,28 +110,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         init();
     }, []);
 
+    useEffect(() => {
+        if (currentWorkspace) {
+            localStorage.setItem('workspaceId', currentWorkspace.id);
+        }
+    }, [currentWorkspace]);
+
     const signIn = async (phone: string, otp: string) => {
         const response = await authAPI.verifyOTP(phone, otp);
         const userData = response.user || (response.data?.user);
 
         const mappedUser = {
             ...userData,
-            isGoalkeeper: userData.isGoalkeeper ?? userData.isGoalie
+            isGoalkeeper: userData.isGoalkeeper ?? userData.isGoalie,
+            profile: userData.profile
         };
 
         setUser(mappedUser);
+        tokenService.setUser(mappedUser);
         if (mappedUser.workspaces) {
             setWorkspaces(mappedUser.workspaces);
 
             if (mappedUser.workspaces.length === 1) {
-                selectWorkspace(mappedUser.workspaces[0].id);
+                // Directly set state — avoids stale closure from calling selectWorkspace()
+                const ws = mappedUser.workspaces[0];
+                setCurrentWorkspace(ws);
+                localStorage.setItem('workspaceId', ws.id);
             } else if (mappedUser.workspaces.length === 0) {
                 setCurrentWorkspace(null);
+                localStorage.removeItem('workspaceId');
             } else {
                 const storedWorkspaceId = localStorage.getItem('workspaceId');
                 const found = mappedUser.workspaces.find((w: Workspace) => w.id === storedWorkspaceId);
                 if (found) {
-                    selectWorkspace(found.id);
+                    setCurrentWorkspace(found);
+                    localStorage.setItem('workspaceId', found.id);
                 } else {
                     setCurrentWorkspace(null);
                     localStorage.removeItem('workspaceId');
@@ -158,7 +185,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const mappedUser = {
                 ...fullUser,
-                isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie
+                isGoalkeeper: fullUser.isGoalkeeper ?? fullUser.isGoalie,
+                profile: fullUser.profile
             };
 
             setUser(mappedUser);

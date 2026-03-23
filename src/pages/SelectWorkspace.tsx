@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, ArrowRight } from 'lucide-react';
+import { LogOut, ArrowRight, Plus } from 'lucide-react';
 
 export const SelectWorkspace: React.FC = () => {
     const { workspaces, selectWorkspace, user, signOut } = useAuth();
@@ -52,6 +52,19 @@ export const SelectWorkspace: React.FC = () => {
                             </CardHeader>
                         </Card>
                     ))}
+
+                    <Card
+                        className="cursor-pointer border-dashed border-2 hover:border-primary/50 hover:bg-muted/50 transition-all flex flex-col items-center justify-center p-6"
+                        onClick={() => navigate('/no-workspace')}
+                    >
+                        <div className="rounded-full bg-primary/10 p-3 mb-3">
+                            <Plus className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="font-semibold text-foreground">Criar Novo Grupo</h3>
+                        <p className="text-sm text-muted-foreground text-center mt-1">
+                            Comece um novo workspace do zero
+                        </p>
+                    </Card>
                 </div>
 
                 <div className="flex justify-center pt-8">

@@ -1,0 +1,82 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="32" fill="#071735"/>
+  <rect x="34" y="34" width="184" height="692" rx="14" fill="#0A1E42"/>
+  <rect x="52" y="70" width="148" height="42" rx="9" fill="#102C59"/>
+  <text x="66" y="96" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">Faz o Simples FC</text>
+  <rect x="52" y="124" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="144" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">🏠 Dashboard</text>
+
+  <rect x="52" y="160" width="148" height="30" rx="7" fill="#63D978"/>
+  <text x="60" y="180" font-family="Inter, Arial" font-size="12" font-weight="700" fill="#0A1E42">🏆 Jogos</text>
+
+  <rect x="52" y="196" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="216" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">👥 Jogadores</text>
+
+  <rect x="52" y="232" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="252" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">🔥 Churrascos</text>
+
+  <rect x="52" y="268" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="288" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">💬 Chats</text>
+
+  <rect x="52" y="304" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="324" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">🧾 Membros</text>
+
+  <rect x="52" y="340" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="360" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">📊 Financeiro</text>
+
+  <rect x="52" y="376" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="396" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">⚙️ Configurações</text>
+
+  <rect x="52" y="418" width="148" height="1" fill="#1D3764"/>
+  <text x="52" y="438" font-family="Inter, Arial" font-size="10" font-weight="700" fill="#7F98C4">COMO JOGADOR</text>
+
+  <rect x="52" y="446" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="466" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">📋 Meu Painel</text>
+
+  <rect x="52" y="482" width="148" height="30" rx="7" fill="#0D254E"/>
+  <text x="60" y="502" font-family="Inter, Arial" font-size="12" fill="#F4F8FF">👤 Meu Perfil</text>
+
+  <rect x="238" y="34" width="928" height="692" rx="14" fill="#081C3B"/>
+  <rect x="264" y="64" width="876" height="72" rx="12" fill="#1A2F54"/>
+  <text x="290" y="108" font-family="Inter, Arial" font-size="28" font-weight="700" fill="#F4F8FF">CAMPO DO VIANA</text>
+
+  <rect x="264" y="156" width="300" height="194" rx="12" fill="#1A2F54"/>
+  <text x="286" y="192" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#F4F8FF">Informações do jogo</text>
+  <rect x="286" y="212" width="256" height="2" fill="#2D4268"/>
+  <text x="286" y="244" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Status</text>
+  <rect x="430" y="228" width="106" height="26" rx="13" fill="#DCE4F2" stroke="#7DA4EA"/>
+  <text x="450" y="246" font-family="Inter, Arial" font-size="11" font-weight="700" fill="#2C56B8">Agendado</text>
+
+  <text x="286" y="278" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Valor por jogador</text>
+  <text x="460" y="278" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">R$ 17,00</text>
+  <text x="286" y="306" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Vagas</text>
+  <text x="492" y="306" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">16 / 16</text>
+
+  <rect x="264" y="364" width="300" height="166" rx="12" fill="#1A2F54"/>
+  <text x="286" y="398" font-family="Inter, Arial" font-size="18" font-weight="700" fill="#F4F8FF">Resumo financeiro</text>
+  <text x="286" y="430" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Total a receber</text>
+  <text x="460" y="430" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">R$ 51,00</text>
+  <text x="286" y="458" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Total pago</text>
+  <text x="477" y="458" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">R$ 0,00</text>
+  <text x="286" y="486" font-family="Inter, Arial" font-size="14" fill="#B9CAE5">Total pendente</text>
+  <text x="451" y="486" font-family="Inter, Arial" font-size="14" font-weight="700" fill="#F4F8FF">R$ 51,00</text>
+
+  <rect x="576" y="156" width="564" height="530" rx="12" fill="#1A2F54"/>
+  <text x="602" y="192" font-family="Inter, Arial" font-size="20" font-weight="700" fill="#F4F8FF">Jogadores confirmados (16)</text>
+  <rect x="602" y="208" width="512" height="2" fill="#2D4268"/>
+
+  <rect x="602" y="228" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="276" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="324" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="372" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="420" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="468" width="512" height="38" rx="8" fill="#1F3A63"/>
+  <rect x="602" y="516" width="512" height="38" rx="8" fill="#1F3A63"/>
+
+  <text x="620" y="252" font-family="Inter, Arial" font-size="13" fill="#D9E5FA">#1  Forja</text>
+  <text x="900" y="252" font-family="Inter, Arial" font-size="12" font-weight="700" fill="#5FE07A">Pago</text>
+  <text x="620" y="300" font-family="Inter, Arial" font-size="13" fill="#D9E5FA">#2  Masaki (conv. Édipo)</text>
+  <text x="900" y="300" font-family="Inter, Arial" font-size="12" font-weight="700" fill="#C6862E">Pendente</text>
+
+  <text x="264" y="706" font-family="Inter, Arial" font-size="16" fill="#9AB1D6">Tela de game detail: controle de vagas, confirmações e pagamentos em tempo real.</text>
+</svg>

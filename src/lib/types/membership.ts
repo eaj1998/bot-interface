@@ -61,7 +61,7 @@ export interface Transaction {
     updatedAt: string;
 }
 
-export type MembershipStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'CANCELED_SCHEDULED' | 'INACTIVE';
+export type MembershipStatus = 'PENDING' | 'ACTIVE' | 'OVERDUE' | 'SUSPENDED' | 'CANCELED_SCHEDULED' | 'INACTIVE';
 
 export interface ITransaction {
     id: string;

@@ -25,14 +25,14 @@ const editPlayerSchema = z.object({
 
 type EditPlayerFormData = z.infer<typeof editPlayerSchema>;
 
-interface EditPlayerModalProps {
-    player: Player | null;
+interface PlayerModalProps {
+    player?: Player | null;
     isOpen: boolean;
     onClose: () => void;
-    onSave: (updatedPlayer: Partial<Player>) => Promise<void>;
+    onSave: (playerData: any) => Promise<void>;
 }
 
-export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
+export const PlayerModal: React.FC<PlayerModalProps> = ({
     player,
     isOpen,
     onClose,
@@ -74,8 +74,19 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                 rating: player.profile?.rating ?? 3.0,
                 dominantFoot: (player.profile?.dominantFoot as any) || 'RIGHT',
             });
+        } else {
+            reset({
+                name: '',
+                phone: '',
+                nick: '',
+                status: 'active',
+                role: 'user',
+                mainPosition: 'MEI',
+                rating: 3.0,
+                dominantFoot: 'RIGHT',
+            });
         }
-    }, [player, reset]);
+    }, [player, reset, isOpen]);
 
     const formatPhoneInput = (value: string) => {
         let digits = value.replace(/\D/g, '');
@@ -107,8 +118,6 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
     };
 
     const onSubmit = async (data: EditPlayerFormData) => {
-        if (!player) return;
-
         try {
             setIsSaving(true);
             await onSave({
@@ -117,8 +126,9 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                 nick: data.nick,
                 status: data.status,
                 role: data.role,
+                position: data.position,
                 profile: {
-                    ...player.profile, // Keep existing fields
+                    ...(player?.profile || {}),
                     mainPosition: data.mainPosition,
                     rating: Number(data.rating),
                     dominantFoot: data.dominantFoot,
@@ -136,9 +146,9 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Editar Jogador</DialogTitle>
+                    <DialogTitle>{player ? 'Editar Jogador' : 'Novo Jogador'}</DialogTitle>
                     <DialogDescription>
-                        Atualize as informações do jogador
+                        {player ? 'Atualize as informações do jogador' : 'Cadastre as informações do novo jogador'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -323,7 +333,7 @@ export const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
                             Cancelar
                         </BFButton>
                         <BFButton type="submit" disabled={isSaving}>
-                            {isSaving ? 'Salvando...' : 'Salvar alterações'}
+                            {isSaving ? 'Salvando...' : (player ? 'Salvar alterações' : 'Criar Jogador')}
                         </BFButton>
                     </DialogFooter>
                 </form>

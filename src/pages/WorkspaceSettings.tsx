@@ -1,190 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { toast } from 'sonner';
-import { Save, RefreshCw, CheckCircle } from 'lucide-react';
+import { Save, MessageSquare, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
-import { BFMoneyInput } from '../components/BF-MoneyInput';
-import { BFCard } from '../components/BF-Card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter
+} from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { workspacesAPI } from '../lib/axios';
-import type { Workspace } from '../lib/types';
-
-// Schema for General & Financial Settings
-const workspaceSettingsSchema = z.object({
-    name: z.string().min(1, 'Nome do grupo é obrigatório'),
-    logoUrl: z.string().url('URL inválida').optional().or(z.literal('')),
-    // Financial Defaults
-    courtCostCents: z.number().min(0).optional(),
-    refereeCostCents: z.number().min(0).optional(),
-    monthlyFeeCents: z.number().min(0).optional(),
-    pix: z.string().optional(),
-});
-
-type WorkspaceSettingsValues = z.infer<typeof workspaceSettingsSchema>;
-
-// Schema for Organizze Integration
-const organizzeSchema = z.object({
-    enabled: z.boolean(),
-    email: z.string().email('Email inválido').optional().or(z.literal('')),
-    apiKey: z.string().optional().or(z.literal('')),
-    accountId: z.coerce.number().optional(),
-    // Categories Mapping
-    catFieldPayment: z.coerce.number().optional(),
-    catPlayerPayment: z.coerce.number().optional(),
-    catPlayerDebt: z.coerce.number().optional(),
-    catGeneral: z.coerce.number().optional(),
-});
-
-type OrganizzeValues = z.infer<typeof organizzeSchema>;
+import { useAuthContext } from '../contexts/AuthContext';
 
 export const WorkspaceSettings: React.FC = () => {
+    const { currentWorkspace, refreshUser } = useAuthContext();
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [workspace, setWorkspace] = useState<Workspace | null>(null);
-
-    // Form 1: General & Financial
-    const {
-        control: generalControl,
-        handleSubmit: handleGeneralSubmit,
-        reset: resetGeneral,
-        formState: { errors: generalErrors }
-    } = useForm<WorkspaceSettingsValues>({
-        resolver: zodResolver(workspaceSettingsSchema)
-    });
-
-    // Form 2: Organizze
-    const {
-        control: organizzeControl,
-        handleSubmit: handleOrganizzeSubmit,
-        reset: resetOrganizze,
-        watch: watchOrganizze,
-    } = useForm<OrganizzeValues>({
-        // @ts-ignore
-        resolver: zodResolver(organizzeSchema),
-        defaultValues: {
-            enabled: false
-        }
-    });
-
-    const isOrganizzeEnabled = watchOrganizze('enabled');
-
-    // Fetch Workspace Data
-    const fetchWorkspace = async () => {
-        try {
-            setLoading(true);
-            const currentWorkspaceId = localStorage.getItem('workspaceId');
-
-            if (!currentWorkspaceId) {
-                toast.error('Nenhum workspace selecionado');
-                return;
-            }
-
-            const data = await workspacesAPI.getWorkspace(currentWorkspaceId);
-            setWorkspace(data);
-
-            // Populate Forms
-            resetGeneral({
-                name: data.name,
-                logoUrl: data.settings?.logoUrl || '',
-                courtCostCents: data.settings?.courtCostCents || 0,
-                refereeCostCents: data.settings?.refereeCostCents || 0,
-                monthlyFeeCents: data.settings?.monthlyFeeCents || 0,
-                pix: data.settings?.pix || '',
-            });
-
-            if (data.organizzeConfig) {
-                resetOrganizze({
-                    enabled: true,
-                    email: data.organizzeConfig.email,
-                    apiKey: '********', // Don't show real API Key if exists, or show it? Usually masked.
-                    accountId: data.organizzeConfig.accountId,
-                    catFieldPayment: data.organizzeConfig.categories.fieldPayment,
-                    catPlayerPayment: data.organizzeConfig.categories.playerPayment,
-                    catPlayerDebt: data.organizzeConfig.categories.playerDebt,
-                    catGeneral: data.organizzeConfig.categories.general,
-                });
-            } else {
-                resetOrganizze({ enabled: false });
-            }
-
-        } catch (error) {
-            console.error(error);
-            toast.error('Erro ao carregar configurações');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [workspaceName, setWorkspaceName] = useState('');
+    const [enablePriority, setEnablePriority] = useState(false);
+    const [workspacePix, setWorkspacePix] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        fetchWorkspace();
-    }, []);
+        if (currentWorkspace) {
+            setWorkspaceName(currentWorkspace.name);
+            setEnablePriority(currentWorkspace.settings?.enableMemberPriority ?? false);
+            setWorkspacePix(currentWorkspace.settings?.pix ?? '');
+        }
+        setLoading(false);
+    }, [currentWorkspace]);
 
-    // Save General/Financial Settings
-    const onGeneralSubmit = async (data: WorkspaceSettingsValues) => {
-        if (!workspace) return;
+    const handleSaveGeneral = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentWorkspace?.id) return;
         try {
-            setSaving(true);
-            await workspacesAPI.updateWorkspace(workspace.id, {
-                name: data.name,
+            setIsSaving(true);
+            await workspacesAPI.updateWorkspace(currentWorkspace.id, {
+                name: workspaceName,
                 settings: {
-                    ...workspace.settings, // Keep existing settings
-                    logoUrl: data.logoUrl,
-                    courtCostCents: data.courtCostCents,
-                    refereeCostCents: data.refereeCostCents,
-                    monthlyFeeCents: data.monthlyFeeCents,
-                    pix: data.pix,
-                }
+                    ...currentWorkspace.settings,
+                    enableMemberPriority: enablePriority,
+                    pix: workspacePix,
+                },
             });
-            toast.success('Configurações salvas com sucesso!');
-            fetchWorkspace(); // Refresh
+            toast.success('Geral atualizado com sucesso!');
+            await refreshUser();
         } catch (error) {
             console.error(error);
-            toast.error('Erro ao salvar configurações');
+            toast.error('Erro ao salvar configurações gerais');
         } finally {
-            setSaving(false);
+            setIsSaving(false);
         }
     };
 
-    // Save Organizze Settings
-    const onOrganizzeSubmit = async (data: OrganizzeValues) => {
-        if (!workspace) return;
-        try {
-            setSaving(true);
-
-            if (!data.enabled) {
-                // If disabled, maybe delete config?
-                await workspacesAPI.deleteOrganizzeSettings(workspace.id);
-                toast.success('Integração desativada');
-            } else {
-                await workspacesAPI.updateOrganizzeSettings(workspace.id, {
-                    email: data.email || '',
-                    apiKey: data.apiKey === '********' ? (workspace.apiKey || '') : (data.apiKey || ''), // Handle masked key
-                    accountId: data.accountId || 0,
-                    categories: {
-                        fieldPayment: data.catFieldPayment || 0,
-                        playerPayment: data.catPlayerPayment || 0,
-                        playerDebt: data.catPlayerDebt || 0,
-                        general: data.catGeneral || 0,
-                    }
-                });
-                toast.success('Integração Organizze salva!');
-            }
-            fetchWorkspace();
-        } catch (error) {
-            console.error(error);
-            toast.error('Erro ao salvar integração Organizze');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (loading) {
+    if (loading && !currentWorkspace) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <RefreshCw className="animate-spin text-muted-foreground" />
@@ -192,253 +68,115 @@ export const WorkspaceSettings: React.FC = () => {
         );
     }
 
-    if (!workspace) {
-        return <div className="p-6">Workspace não encontrado</div>;
+    if (!currentWorkspace) {
+        return <div className="p-4 sm:p-6">Nenhum workspace selecionado</div>;
     }
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Configurações do Grupo</h1>
-                    <p className="text-muted-foreground">Gerencie os dados e integrações do seu grupo</p>
-                </div>
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-foreground">Configurações do Workspace</h1>
+                <p className="text-muted-foreground">Gerencie todos os aspectos do seu grupo em um só lugar</p>
             </div>
 
-            <Tabs defaultValue="general" className="w-full">
-                <TabsList className="mb-6">
-                    <TabsTrigger value="general">Geral</TabsTrigger>
-                    <TabsTrigger value="financial">Financeiro</TabsTrigger>
-                    <TabsTrigger value="integrations">Integrações</TabsTrigger>
-                </TabsList>
+            {/* General Settings */}
+            <Card className="border-border shadow-sm">
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Configurações Gerais</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                        Informações básicas do seu grupo e preferências de acesso.
+                    </CardDescription>
+                </CardHeader>
 
-                {/* ABA GERAL */}
-                <TabsContent value="general">
-                    <BFCard>
-                        <form onSubmit={handleGeneralSubmit(onGeneralSubmit)} className="p-6 space-y-6">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Nome do Grupo</Label>
-                                    <Controller
-                                        name="name"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFInput {...field} error={generalErrors.name?.message} fullWidth />
-                                        )}
-                                    />
-                                </div>
+                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="ws-name">Nome do Grupo</Label>
+                            <BFInput
+                                id="ws-name"
+                                value={workspaceName}
+                                onChange={(value) => setWorkspaceName(value)}
+                                fullWidth
+                                placeholder="Ex: Futebol de Quinta"
+                            />
+                        </div>
 
-                                <div className="space-y-2">
-                                    <Label>Logo URL</Label>
-                                    <Controller
-                                        name="logoUrl"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFInput {...field} placeholder="https://..." fullWidth />
-                                        )}
-                                    />
-                                </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="ws-pix">Chave Pix do Grupo (Mensalidades e Taxas do Bot)</Label>
+                            <BFInput
+                                id="ws-pix"
+                                value={workspacePix}
+                                onChange={(value) => setWorkspacePix(value)}
+                                fullWidth
+                                placeholder="Ex: 123.456.789-00 ou seu@email.com"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Essa é a chave Pix usada para recebimento das mensalidades VIP pelo painel de controle.
+                            </p>
+                        </div>
 
-                                <div className="space-y-2">
-                                    <Label>ID do Workspace (Somente Leitura)</Label>
-                                    <BFInput value={workspace.id} disabled readOnly fullWidth className="bg-muted text-muted-foreground" />
-                                </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-4 shadow-sm gap-4">
+                            <div className="space-y-1">
+                                <Label className="text-base">Prioridade para Mensalistas</Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Bloqueia a entrada de jogadores avulsos na lista antes do dia do jogo.
+                                </p>
                             </div>
+                            <Switch
+                                checked={enablePriority}
+                                onCheckedChange={setEnablePriority}
+                                className="self-start sm:self-auto"
+                            />
+                        </div>
 
-                            <div className="flex justify-end">
-                                <BFButton type="submit" disabled={saving} icon={<Save size={16} />}>
-                                    Salvar Alterações
-                                </BFButton>
-                            </div>
-                        </form>
-                    </BFCard>
-                </TabsContent>
+                        <div className="space-y-2 pt-2">
+                            <Label className="text-muted-foreground text-xs">ID do Workspace</Label>
+                            <BFInput
+                                value={currentWorkspace.id}
+                                disabled
+                                readOnly
+                                fullWidth
+                                className="bg-muted/50 text-muted-foreground font-mono text-xs h-8"
+                            />
+                        </div>
+                    </div>
+                </CardContent>
 
-                {/* ABA FINANCEIRO */}
-                <TabsContent value="financial">
-                    <BFCard>
-                        <form onSubmit={handleGeneralSubmit(onGeneralSubmit)} className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label>Custo Padrão da Quadra</Label>
-                                    <Controller
-                                        name="courtCostCents"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFMoneyInput
-                                                value={field.value ? (field.value / 100).toFixed(2).replace('.', ',') : ''}
-                                                onChange={(_, cents) => field.onChange(cents)}
-                                                placeholder="0,00"
-                                            />
-                                        )}
-                                    />
-                                    <p className="text-xs text-muted-foreground">Valor sugerido ao criar novo jogo</p>
-                                </div>
+                <CardFooter className="flex flex-col sm:flex-row justify-end border-t p-4 sm:p-6">
+                    <BFButton
+                        onClick={handleSaveGeneral}
+                        disabled={isSaving || !workspaceName.trim()}
+                        isLoading={isSaving}
+                        icon={<Save size={16} />}
+                        className="w-full sm:w-auto"
+                    >
+                        Salvar Geral
+                    </BFButton>
+                </CardFooter>
+            </Card>
 
-                                <div className="space-y-2">
-                                    <Label>Custo Padrão do Juiz</Label>
-                                    <Controller
-                                        name="refereeCostCents"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFMoneyInput
-                                                value={field.value ? (field.value / 100).toFixed(2).replace('.', ',') : ''}
-                                                onChange={(_, cents) => field.onChange(cents)}
-                                                placeholder="0,00"
-                                            />
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Valor da Mensalidade</Label>
-                                    <Controller
-                                        name="monthlyFeeCents"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFMoneyInput
-                                                value={field.value ? (field.value / 100).toFixed(2).replace('.', ',') : ''}
-                                                onChange={(_, cents) => field.onChange(cents)}
-                                                placeholder="0,00"
-                                            />
-                                        )}
-                                    />
-                                    <p className="text-xs text-muted-foreground">Usado para gerar cobranças de mensalistas</p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Chave Pix Padrão</Label>
-                                    <Controller
-                                        name="pix"
-                                        control={generalControl}
-                                        render={({ field }) => (
-                                            <BFInput {...field} placeholder="CPF, Email ou Aleatória" fullWidth />
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-4 border-t border-border">
-                                <BFButton type="submit" disabled={saving} icon={<Save size={16} />}>
-                                    Salvar Configurações Financeiras
-                                </BFButton>
-                            </div>
-                        </form>
-                    </BFCard>
-                </TabsContent>
-
-                {/* ABA INTEGRAÇÕES (ORGANIZZE) */}
-                <TabsContent value="integrations">
-                    <BFCard>
-                        <form onSubmit={handleOrganizzeSubmit(onOrganizzeSubmit as any)} className="p-6 space-y-6">
-                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                                        <CheckCircle className="text-green-600 dark:text-green-400" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-foreground">Integração Organizze</h3>
-                                        <p className="text-sm text-muted-foreground">Sincronize receitas e despesas automaticamente</p>
-                                    </div>
-                                </div>
-                                <Controller
-                                    name="enabled"
-                                    control={organizzeControl}
-                                    render={({ field }) => (
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    )}
-                                />
-                            </div>
-
-                            {isOrganizzeEnabled && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>Email da Conta Organizze</Label>
-                                            <Controller
-                                                name="email"
-                                                control={organizzeControl}
-                                                render={({ field }) => (
-                                                    <BFInput {...field} fullWidth />
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>API Key (Token)</Label>
-                                            <Controller
-                                                name="apiKey"
-                                                control={organizzeControl}
-                                                render={({ field }) => (
-                                                    <BFInput {...field} type="password" placeholder="••••••••" fullWidth />
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <Label>Account ID (ID da Conta/Grupo)</Label>
-                                            <Controller
-                                                name="accountId"
-                                                control={organizzeControl}
-                                                render={({ field }) => (
-                                                    <BFInput {...field} type="number" fullWidth />
-                                                )}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-border">
-                                        <h3 className="font-medium mb-4 flex items-center gap-2">
-                                            <RefreshCw size={16} /> Mapeamento de Categorias (IDs)
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label>Pagamento de Quadra</Label>
-                                                <Controller
-                                                    name="catFieldPayment"
-                                                    control={organizzeControl}
-                                                    render={({ field }) => <BFInput {...field} type="number" fullWidth />}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Pagamento de Jogador</Label>
-                                                <Controller
-                                                    name="catPlayerPayment"
-                                                    control={organizzeControl}
-                                                    render={({ field }) => <BFInput {...field} type="number" fullWidth />}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Dívidas / Pendentes</Label>
-                                                <Controller
-                                                    name="catPlayerDebt"
-                                                    control={organizzeControl}
-                                                    render={({ field }) => <BFInput {...field} type="number" fullWidth />}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Geral / Outros</Label>
-                                                <Controller
-                                                    name="catGeneral"
-                                                    control={organizzeControl}
-                                                    render={({ field }) => <BFInput {...field} type="number" fullWidth />}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex justify-end pt-4 border-t border-border">
-                                <BFButton type="submit" disabled={saving} icon={<Save size={16} />}>
-                                    Salvar Integração
-                                </BFButton>
-                            </div>
-                        </form>
-                    </BFCard>
-                </TabsContent>
-            </Tabs>
+            {/* WhatsApp Groups Link */}
+            <Card className="border-border shadow-sm">
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-primary" />
+                        Grupos do WhatsApp
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
+                        Gerencie e configure os grupos vinculados ao bot — horários, financeiro e regras de cada grupo.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                    <BFButton
+                        variant="secondary"
+                        icon={<MessageSquare size={16} />}
+                        onClick={() => navigate('../chats', { relative: 'path' })}
+                        className="w-full sm:w-auto"
+                    >
+                        Gerenciar Grupos e Configurações
+                    </BFButton>
+                </CardContent>
+            </Card>
         </div>
     );
 };

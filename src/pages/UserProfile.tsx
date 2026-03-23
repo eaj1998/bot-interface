@@ -5,6 +5,18 @@ import { BFButton } from '../components/BF-Button';
 import { BFInput } from '../components/BF-Input';
 import { BFIcons } from '../components/BF-Icons';
 import { playersAPI } from '../lib/axios';
+import { Star } from 'lucide-react';
+
+const getPositionLabel = (pos?: string) => {
+  const map: Record<string, string> = {
+    'GOL': 'Goleiro',
+    'ZAG': 'Zagueiro',
+    'LAT': 'Lateral',
+    'MEI': 'Meio-Campo',
+    'ATA': 'Atacante'
+  };
+  return pos && map[pos] ? map[pos] : 'Não informada';
+};
 
 export const UserProfile: React.FC = () => {
   const { user, updateUser, refreshUser } = useAuth();
@@ -16,7 +28,20 @@ export const UserProfile: React.FC = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     isGoalkeeper: user?.isGoalkeeper || false,
+    mainPosition: user?.profile?.mainPosition || '',
+    secondaryPositions: user?.profile?.secondaryPositions || [],
   });
+
+  React.useEffect(() => {
+    if (user && !isEditing) {
+      setFormData({
+        name: user.name || '',
+        isGoalkeeper: user.isGoalkeeper || false,
+        mainPosition: user.profile?.mainPosition || '',
+        secondaryPositions: user.profile?.secondaryPositions || [],
+      });
+    }
+  }, [user, isEditing]);
 
   const handleSave = async () => {
     try {
@@ -28,7 +53,11 @@ export const UserProfile: React.FC = () => {
 
       const response = await playersAPI.updatePlayer(user.id, {
         name: formData.name,
-        isGoalie: formData.isGoalkeeper
+        isGoalie: formData.isGoalkeeper,
+        profile: {
+          mainPosition: formData.mainPosition as any,
+          secondaryPositions: formData.secondaryPositions as any,
+        }
       });
 
       const updatedUserData = response.data || response;
@@ -38,6 +67,11 @@ export const UserProfile: React.FC = () => {
         ...user,
         name: updatedUserData.name || formData.name,
         isGoalkeeper: updatedUserData.isGoalkeeper ?? updatedUserData.isGoalie ?? formData.isGoalkeeper,
+        profile: {
+          ...user.profile,
+          mainPosition: formData.mainPosition,
+          secondaryPositions: formData.secondaryPositions
+        }
       });
 
       // Verify reliability by fetching fresh data from server
@@ -58,6 +92,8 @@ export const UserProfile: React.FC = () => {
     setFormData({
       name: user?.name || '',
       isGoalkeeper: user?.isGoalkeeper || false,
+      mainPosition: user?.profile?.mainPosition || '',
+      secondaryPositions: user?.profile?.secondaryPositions || [],
     });
     setIsEditing(false);
     setError('');
@@ -197,6 +233,117 @@ export const UserProfile: React.FC = () => {
                   <BFIcons.Info size={12} />
                   Telefone não pode ser alterado
                 </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-[--foreground] mb-2">
+                    Posição Principal
+                  </label>
+                  {isEditing ? (
+                    <select
+                      className="w-full h-10 px-3 py-2 rounded-md border border-[--border] bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[--primary] focus:ring-offset-2"
+                      value={formData.mainPosition}
+                      onChange={(e) => setFormData({ ...formData, mainPosition: e.target.value })}
+                      disabled={loading}
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="GOL">Goleiro</option>
+                      <option value="ZAG">Zagueiro</option>
+                      <option value="LAT">Lateral</option>
+                      <option value="MEI">Meio-Campo</option>
+                      <option value="ATA">Atacante</option>
+                    </select>
+                  ) : (
+                    <div className="px-4 py-3 bg-[--muted]/20 rounded-lg border border-[--border]/50 min-h-[46px] flex items-center">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-[--primary]/10 text-[--primary] rounded border border-[--primary]/20">
+                        {getPositionLabel(user?.profile?.mainPosition)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-[--foreground]">
+                      Posição Secundária
+                    </label>
+                    {isEditing && (
+                      <span className="text-xs text-[--muted-foreground]">
+                        Máx. 2 posições
+                      </span>
+                    )}
+                  </div>
+                  {isEditing ? (
+                    <div className="flex flex-wrap gap-2">
+                      {['GOL', 'ZAG', 'LAT', 'MEI', 'ATA'].map((pos) => {
+                        const isSelected = formData.secondaryPositions.includes(pos);
+                        return (
+                          <button
+                            key={pos}
+                            type="button"
+                            disabled={loading || (!isSelected && formData.secondaryPositions.length >= 2)}
+                            onClick={() => {
+                              setFormData(prev => {
+                                const current = prev.secondaryPositions;
+                                if (current.includes(pos)) {
+                                  return { ...prev, secondaryPositions: current.filter(p => p !== pos) };
+                                }
+                                if (current.length >= 2) return prev;
+                                return { ...prev, secondaryPositions: [...current, pos] };
+                              });
+                            }}
+                            className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${isSelected
+                              ? 'bg-[--primary] border-[--primary] text-[--primary-foreground]'
+                              : 'bg-transparent border-[--border] text-[--muted-foreground] hover:border-[--primary]/50 disabled:opacity-50 disabled:cursor-not-allowed'
+                              }`}
+                          >
+                            {getPositionLabel(pos)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 bg-[--muted]/20 rounded-lg border border-[--border]/50 min-h-[46px] flex flex-wrap gap-2 items-center">
+                      {user?.profile?.secondaryPositions?.length ? (
+                        user.profile.secondaryPositions.map(pos => (
+                          <span key={pos} className="px-2 py-0.5 text-xs font-medium bg-[--primary]/10 text-[--primary] rounded border border-[--primary]/20">
+                            {getPositionLabel(pos)}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[--muted-foreground] text-sm">Nenhuma informada</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção: Avaliação */}
+          <div>
+            <div className="flex items-center gap-2 mb-6">
+              <Star size={20} className="text-yellow-500 fill-current" />
+              <h3 className="text-lg font-semibold text-[--foreground]">
+                Sua Avaliação (Score)
+              </h3>
+            </div>
+
+            <div className="relative overflow-hidden p-6 rounded-xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-transparent">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <Star size={64} className="text-yellow-500 fill-current" />
+              </div>
+              <div className="relative z-10 flex items-center gap-6">
+                <div className="flex flex-col items-center justify-center p-4 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-yellow-500/20">
+                  <div className="text-4xl font-black bg-gradient-to-br from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+                    {user?.profile?.rating?.toFixed(1) || '3.0'}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-semibold text-[--foreground]">Sua performance de jogo</span>
+                  <span className="text-sm font-medium text-[--muted-foreground] mt-1">Baseado em {user?.profile?.ratingCount || 0} avaliações da turma</span>
+                  <span className="text-xs text-[--muted-foreground]/80 mt-1">Continue jogando para melhorar seu ranking!</span>
+                </div>
               </div>
             </div>
           </div>

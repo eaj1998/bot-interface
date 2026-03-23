@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { BFCard, BFCardHeader, BFCardContent } from '../components/BF-Card';
 import { BFBadge } from '../components/BF-Badge';
 import { BFIcons } from '../components/BF-Icons';
-import { BFSelect } from '../components/BF-Select';
+import { Skeleton } from '../components/ui/skeleton';
 import { api } from '../lib/axios';
 import { formatEventDate, formatEventTime } from '../lib/dateUtils';
 import { toast } from 'sonner';
@@ -50,11 +50,10 @@ interface DashboardData {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { workspaces, currentWorkspace } = useAuth();
+  const { currentWorkspace } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -62,10 +61,8 @@ export const AdminDashboard: React.FC = () => {
     const init = async () => {
       try {
         // Use workspaces from context
-        const initialWorkspace = currentWorkspace?.slug || 'all';
         const workspaceId = currentWorkspace?.id || null;
 
-        setSelectedWorkspace(initialWorkspace);
 
         const url = workspaceId ? `/dashboard/${workspaceId}` : '/dashboard';
         const response = await api.get(url, { signal: abortController.signal });
@@ -90,27 +87,6 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [currentWorkspace]);
 
-  const fetchDashboardData = async (workspace: string) => {
-    try {
-      setLoading(true);
-
-      let url = '/dashboard';
-      if (workspace !== 'all') {
-        const foundWorkspace = workspaces.find((ws: any) => ws.slug === workspace);
-        if (foundWorkspace) {
-          url = `/dashboard/${foundWorkspace.id}`;
-        }
-      }
-
-      const response = await api.get(url);
-      setDashboardData(response.data);
-    } catch (error: any) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Erro ao carregar dados do dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatMoney = (cents: number): string => {
     return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
@@ -137,16 +113,47 @@ export const AdminDashboard: React.FC = () => {
       'pago': { variant: 'success', label: 'Pago' },
       'confirmado': { variant: 'success', label: 'Pago' },
     };
-    const config = statusMap[status] || { variant: 'warning' as const, label: status };
+    const config = statusMap[status?.toLowerCase()] || { variant: 'warning' as const, label: status };
     return <BFBadge variant={config.variant} size="sm">{config.label}</BFBadge>;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <p className="mt-2 text-muted-foreground">Carregando dashboard...</p>
+      <div className="space-y-6" data-test="admin-dashboard-skeleton">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
+          <div>
+            <Skeleton className="h-9 w-64 mb-2" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <BFCard key={i} variant="elevated" padding="md">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-7 w-32" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <Skeleton className="h-12 w-12 rounded-lg" />
+              </div>
+            </BFCard>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <BFCard key={i} variant="elevated" padding="lg">
+              <div className="mb-4">
+                <Skeleton className="h-5 w-36 mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <div className="space-y-3">
+                {[...Array(3)].map((_, j) => (
+                  <Skeleton key={j} className="h-16 w-full rounded-lg" />
+                ))}
+              </div>
+            </BFCard>
+          ))}
         </div>
       </div>
     );
@@ -163,6 +170,10 @@ export const AdminDashboard: React.FC = () => {
   }
 
   const { stats, recentGames, recentDebts } = dashboardData;
+  const pendingDebts = recentDebts.filter(d => {
+    const s = d.status?.toLowerCase();
+    return s === 'pending' || s === 'pendente' || s === 'overdue';
+  });
 
   return (
     <div className="space-y-6" data-test="admin-dashboard">
@@ -173,23 +184,6 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-[--muted-foreground]">
             Visão geral do sistema Faz o Simples
           </p>
-        </div>
-        <div className="w-full sm:w-64">
-          <BFSelect
-            label="Workspace"
-            value={selectedWorkspace}
-            onChange={(value) => {
-              const newWorkspace = String(value);
-              setSelectedWorkspace(newWorkspace);
-              fetchDashboardData(newWorkspace);
-            }}
-            options={[
-              { value: 'all', label: 'Todos os Workspaces' },
-              ...(Array.isArray(workspaces) ? workspaces.map(ws => ({ value: ws.slug, label: ws.name })) : [])
-            ]}
-            placeholder="Selecione o workspace"
-            data-test="workspace-select"
-          />
         </div>
       </div>
 
@@ -230,22 +224,26 @@ export const AdminDashboard: React.FC = () => {
         </BFCard>
 
         {/* Card: Membros */}
-        <BFCard variant="stat" padding="md" data-test="stat-members">
+        <BFCard variant="elevated" padding="md" data-test="stat-members">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-white/80 mb-1">Membros</p>
-              <h2 className="text-white">{stats.totalMembers}</h2>
+              <p className="text-[--muted-foreground] mb-1">Membros</p>
+              <h2 className="text-[--foreground]">{stats.totalMembers}</h2>
               <div className="flex gap-2 mt-2">
-                <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div> {stats.activeMembers}
+                <span className="text-xs bg-[--accent] px-2 py-0.5 rounded text-[--foreground] flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)]" aria-hidden="true"></div>
+                  <span className="sr-only">Ativos: </span>
+                  {stats.activeMembers}
                 </span>
-                <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div> {stats.suspendedMembers}
+                <span className="text-xs bg-[--accent] px-2 py-0.5 rounded text-[--foreground] flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--destructive)]" aria-hidden="true"></div>
+                  <span className="sr-only">Suspensos: </span>
+                  {stats.suspendedMembers}
                 </span>
               </div>
             </div>
-            <div className="bg-white/20 p-3 rounded-lg">
-              <BFIcons.Users size={24} color="white" />
+            <div className="bg-[--primary]/10 p-3 rounded-lg">
+              <BFIcons.Users size={24} color="var(--primary)" />
             </div>
           </div>
         </BFCard>
@@ -273,6 +271,14 @@ export const AdminDashboard: React.FC = () => {
           <BFCardHeader
             title="Jogos Recentes"
             subtitle={`${recentGames.length} agendados`}
+            action={
+              <button
+                onClick={() => navigate('/admin/games')}
+                className="text-sm text-[--primary] hover:underline cursor-pointer"
+              >
+                Ver todos
+              </button>
+            }
           />
           <BFCardContent>
             <div className="space-y-3">
@@ -289,7 +295,7 @@ export const AdminDashboard: React.FC = () => {
                     <div>
                       <p className="text-[--foreground]">{game.name}</p>
                       <p className="text-[--muted-foreground]">
-                        {formatEventDate(game.date)} às {formatEventTime(game.date)}
+                        {formatEventDate(game.date)} às {game.time ? game.time.replace(':', 'h') : formatEventTime(game.date)}
                       </p>
                     </div>
                   </div>
@@ -310,14 +316,23 @@ export const AdminDashboard: React.FC = () => {
         <BFCard variant="elevated" padding="lg" data-test="recent-debts">
           <BFCardHeader
             title="Débitos Recentes"
-            subtitle={`${recentDebts.length} pendentes`}
+            subtitle={`${pendingDebts.length} pendentes`}
+            action={
+              <button
+                onClick={() => navigate('/admin/finance')}
+                className="text-sm text-[--primary] hover:underline cursor-pointer"
+              >
+                Ver todos
+              </button>
+            }
           />
           <BFCardContent>
             <div className="space-y-3">
               {recentDebts.length > 0 ? recentDebts.map((debt) => (
                 <div
                   key={debt.id}
-                  className="flex items-center justify-between p-3 bg-[--accent] rounded-lg"
+                  className="flex items-center justify-between p-3 bg-[--accent] rounded-lg cursor-pointer hover:bg-accent/80 transition-colors"
+                  onClick={() => navigate('/admin/finance')}
                 >
                   <div className="flex items-center gap-3">
                     {(debt.category === 'general' || debt.category === 'field-payment') ? (

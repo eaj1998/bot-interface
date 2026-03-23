@@ -16,6 +16,25 @@ let failedQueue: Array<{
   reject: (error: Error) => void;
 }> = [];
 
+// Prevents multiple 402 toasts firing when several requests fail simultaneously
+let isHandling402 = false;
+// Prevents multiple plan-restriction 403 toasts firing when several requests fail simultaneously
+let isHandling403Plan = false;
+
+// Helper to fully clear session including backend HTTP-only cookies
+const forceLogout = async () => {
+  try {
+    await axios.post(`${API_BASE_URL}/auth/logout`);
+  } catch (e) {
+    // Ignore error, we're already failing
+  } finally {
+    tokenService.clearTokens();
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }
+};
+
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -39,6 +58,7 @@ export const tokenService = {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('workspaceId');
   },
   getUser: () => {
     const user = localStorage.getItem('user');
@@ -86,18 +106,56 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Handle 403 Forbidden (e.g., early access restriction for future games)
-    if (error.response?.status === 403) {
-      const message = (error.response.data as any)?.message ||
-        'Acesso restrito a mensalistas para jogos futuros';
+    // Handle 402 Payment Required (subscription expired)
+    if (error.response?.status === 402) {
+      const onBillingPage = window.location.pathname === '/admin/billing';
 
-      // Dynamically import toast to avoid circular dependencies
-      import('sonner').then(({ toast }) => {
-        toast.error(message, {
-          description: 'Torne-se um mensalista para ter early access aos jogos!',
-          duration: 5000,
-        });
-      });
+      if (onBillingPage) {
+        // Already on billing — swallow silently so no component shows error states
+        return new Promise(() => {}); // never resolves or rejects
+      }
+
+      if (!isHandling402) {
+        isHandling402 = true;
+        window.location.href = '/admin/billing';
+        // isHandling402 resets on next page load naturally (module is re-evaluated)
+      }
+      return new Promise(() => {}); // pending promise stops error propagation
+    }
+
+    // Handle 403 Forbidden
+    if (error.response?.status === 403) {
+      const url = error.config?.url || '';
+      const isAuthOrWorkspaceCall = url.includes('/auth/') || url.includes('/workspaces');
+      if (!isAuthOrWorkspaceCall) {
+        const message = (error.response.data as any)?.message || '';
+        const isPlanRestriction = message.includes('plano') || message.includes('upgrade');
+
+        if (isPlanRestriction) {
+          // Dedup: show only one toast across concurrent plan-gated requests
+          if (!isHandling403Plan) {
+            isHandling403Plan = true;
+            import('sonner').then(({ toast }) => {
+              toast.error('Plano insuficiente', {
+                description: message || 'Esta funcionalidade requer um plano superior.',
+                duration: 6000,
+              });
+            });
+            setTimeout(() => { isHandling403Plan = false; }, 3000);
+          }
+          // Tag the error so catch blocks can suppress duplicate toasts
+          (error as any)._isPlanRestriction = true;
+          return Promise.reject(error);
+        } else {
+          // Early-access restriction for players trying to sign up for future games
+          import('sonner').then(({ toast }) => {
+            toast.error(message || 'Acesso restrito a mensalistas para jogos futuros', {
+              description: 'Torne-se um mensalista para ter early access aos jogos!',
+              duration: 5000,
+            });
+          });
+        }
+      }
 
       return Promise.reject(error);
     }
@@ -107,14 +165,12 @@ api.interceptors.response.use(
     }
 
     if (originalRequest._retry) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
     if (originalRequest.url?.includes('/auth/refresh')) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -139,8 +195,7 @@ api.interceptors.response.use(
     const refreshToken = tokenService.getRefreshToken();
 
     if (!refreshToken) {
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(error);
     }
 
@@ -175,8 +230,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError as Error, null);
       isRefreshing = false;
-      tokenService.clearTokens();
-      window.location.href = '/login';
+      forceLogout();
       return Promise.reject(refreshError);
     }
   }
@@ -224,15 +278,18 @@ export const authAPI = {
   },
 
   /**
+   * Atualiza o perfil do usuário autenticado (global, sem necessidade de workspace)
+   */
+  updateAuthProfile: async (data: { name?: string }) => {
+    const response = await api.put('/auth/me', data);
+    return response.data.data || response.data;
+  },
+
+  /**
    * Faz logout do usuário
    */
   logout: async () => {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      tokenService.clearTokens();
-      window.location.href = '/login';
-    }
+    await forceLogout();
   },
 
   /**
@@ -277,7 +334,6 @@ export const gamesAPI = {
     maxPlayers: number;
     pricePerPlayer: number;
     chatId: string;
-    workspaceId: string;
   }) => {
     const response = await api.post('/games', data);
     return response.data;
@@ -294,8 +350,8 @@ export const gamesAPI = {
   /**
    * Cancela/deleta um jogo
    */
-  deleteGame: async (gameId: string, workspaceId: string) => {
-    const response = await api.delete(`/games/${gameId}`, { data: { workspaceId } });
+  deleteGame: async (gameId: string) => {
+    const response = await api.delete(`/games/${gameId}`);
     return response.data;
   },
 
@@ -310,8 +366,8 @@ export const gamesAPI = {
   /**
    * Fecha um jogo
    */
-  closeGame: async (gameId: string, workspaceId: string) => {
-    const response = await api.post(`/games/${gameId}/close`, { workspaceId });
+  closeGame: async (gameId: string) => {
+    const response = await api.post(`/games/${gameId}/close`);
     return response.data;
   },
 
@@ -432,6 +488,10 @@ export const chatsAPI = {
       priceCents: number;
       pix: string;
     };
+    settings?: {
+      allowGuests?: boolean;
+      maxPlayersPerGame?: number;
+    };
   }) => {
     const response = await api.post('/chats', data);
     return response.data;
@@ -451,6 +511,7 @@ export const chatsAPI = {
         autoCreateGame?: boolean;
         autoCreateDaysBefore?: number;
         requirePaymentProof?: boolean;
+        maxPlayersPerGame?: number;
       };
       financials?: {
         defaultPriceCents?: number;
@@ -472,10 +533,8 @@ export const chatsAPI = {
   /**
    * Busca chats por workspace
    */
-  getChatsByWorkspace: async (workspaceId: string) => {
-    const response = await api.get('/chats', {
-      params: { workspaceId }
-    });
+  getChatsByWorkspace: async () => {
+    const response = await api.get('/chats');
     return response.data;
   },
   /**
@@ -499,6 +558,17 @@ export const chatsAPI = {
  * API de Workspaces
  */
 export const workspacesAPI = {
+  /**
+   * Cria um novo workspace
+   */
+  createWorkspace: async (data: { name: string; slug?: string }) => {
+    const response = await api.post('/workspaces', data, {
+      headers: { 'x-workspace-id': undefined },
+    });
+    return response.data;
+  },
+
+
   /**
    * Busca todos os workspaces
    */
@@ -556,7 +626,8 @@ export const workspacesAPI = {
    * Busca chats de um workspace
    */
   getWorkspaceChats: async (workspaceId: string) => {
-    const response = await api.get(`/workspaces/${workspaceId}/chats`);
+    const endpoint = workspaceId ? `/workspaces/${workspaceId}/chats` : '/chats';
+    const response = await api.get(endpoint);
     return response.data;
   },
 
@@ -596,6 +667,7 @@ export const playersAPI = {
     phoneE164: string;
     nick?: string;
     position?: 'GOALKEEPER' | 'DEFENDER' | 'MIDFIELDER' | 'STRIKER';
+    isGoalie?: boolean;
     type: 'MENSALISTA' | 'AVULSO';
     stars?: number;
     workspaceId: string;
@@ -614,7 +686,6 @@ export const playersAPI = {
     status?: 'active' | 'inactive' | 'suspended';
     isGoalie?: boolean;
     role?: 'admin' | 'user';
-    workspaceId?: string;
     profile?: any;
   }) => {
     const response = await api.put(`/players/${playerId}`, data);
@@ -629,7 +700,6 @@ export const playersAPI = {
     status?: 'active' | 'inactive' | 'all';
     page?: number;
     limit?: number;
-    workspaceId?: string;
   }) => {
     const queryParams: any = {
       page: params?.page || 1,
@@ -642,10 +712,6 @@ export const playersAPI = {
 
     if (params?.status && params.status !== 'all') {
       queryParams.status = params.status;
-    }
-
-    if (params?.workspaceId) {
-      queryParams.workspaceId = params.workspaceId;
     }
 
     const response = await api.get('/players', { params: queryParams });
@@ -724,7 +790,6 @@ export const bbqAPI = {
   getAllBBQs: async (filters?: {
     status?: 'open' | 'closed' | 'finished' | 'cancelled';
     chatId?: string;
-    workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
     page?: number;
@@ -737,7 +802,6 @@ export const bbqAPI = {
 
     if (filters?.status) params.status = filters.status;
     if (filters?.chatId) params.chatId = filters.chatId;
-    if (filters?.workspaceId) params.workspaceId = filters.workspaceId;
     if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
     if (filters?.dateTo) params.dateTo = filters.dateTo;
 
@@ -749,11 +813,8 @@ export const bbqAPI = {
    * Obtém estatísticas de churrascos
    * @swagger GET /api/bbq/stats
    */
-  getStats: async (workspaceId?: string) => {
-    const params: any = {};
-    if (workspaceId) params.workspaceId = workspaceId;
-
-    const response = await api.get('/bbq/stats', { params });
+  getStats: async () => {
+    const response = await api.get('/bbq/stats');
     return response.data.data || response.data;
   },
 
@@ -831,12 +892,21 @@ export const bbqAPI = {
   },
 
   /**
-   * Alterna status de isenção (Free)
+   * Alterna se participante é isento
    */
   toggleParticipantFree: async (bbqId: string, userId: string, isFree: boolean) => {
     const response = await api.patch(`/bbq/${bbqId}/participants/${userId}/free`, { isFree });
     return response.data;
-  }
+  },
+
+  /**
+   * Atualiza status do churrasco
+   */
+  updateStatus: async (bbqId: string, status: 'open' | 'closed' | 'finished' | 'cancelled') => {
+    const response = await api.patch(`/bbq/${bbqId}/status`, { status });
+    return response.data;
+  },
+
 };
 
 
@@ -848,9 +918,7 @@ export const membershipsAPI = {
    * Busca a assinatura do usuário autenticado
    */
   getMyMembership: async (workspaceId: string) => {
-    const response = await api.get(`/memberships/my`, {
-      params: { workspaceId }
-    });
+    const response = await api.get(`/memberships/my`, { params: { workspaceId } });
     return response.data;
   },
 
@@ -858,7 +926,7 @@ export const membershipsAPI = {
    * Cria uma nova assinatura
    */
 
-  createMembership: async (data: { workspaceId: string; userId: string; planValue: number }) => {
+  createMembership: async (data: { userId: string; planValue: number; workspaceId: string }) => {
     const response = await api.post('/memberships/admin/create', data);
     return response.data;
   },
@@ -886,24 +954,24 @@ export const membershipsAPI = {
     const response = await api.patch(`/memberships/${membershipId}/reactivate`, { notes });
     return response.data;
   },
-  getAdminList: async (params: { workspaceId: string; page?: number; limit?: number; filter?: string; search?: string }) => {
+  getAdminList: async (params: { page?: number; limit?: number; filter?: string; search?: string; workspaceId?: string }) => {
     const response = await api.get('/memberships/admin/list', { params });
     return response.data;
   },
-  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number; workspaceId?: string }) => {
+  updateMembership: async (id: string, data: { planValue?: number; billingDay?: number; }) => {
     const response = await api.put(`/memberships/${id}`, data);
     return response.data;
   },
-  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string; workspaceId?: string }) => {
+  registerManualPayment: async (id: string, data: { amount: number; method: string; description?: string; }) => {
     const response = await api.post(`/memberships/${id}/manual-payment`, data);
     return response.data;
   },
-  suspendMembershipAdmin: async (id: string, reason: string, workspaceId: string) => {
-    const response = await api.post(`/memberships/${id}/suspend`, { reason, workspaceId });
+  suspendMembershipAdmin: async (id: string, reason: string) => {
+    const response = await api.post(`/memberships/${id}/suspend`, { reason });
     return response.data;
   },
-  cancelMembershipAdmin: async (id: string, immediate: boolean, workspaceId: string) => {
-    const response = await api.post(`/memberships/${id}/cancel`, { immediate, workspaceId });
+  cancelMembershipAdmin: async (id: string, immediate: boolean) => {
+    const response = await api.post(`/memberships/${id}/cancel`, { immediate });
     return response.data;
   },
   processMonthlyBilling: async (workspaceId: string) => {
@@ -936,11 +1004,8 @@ export const transactionsAPI = {
   /**
    * Busca o saldo financeiro do usuário
    */
-  getMyBalance: async (workspaceId?: string) => {
-    const params: any = {};
-    if (workspaceId) params.workspaceId = workspaceId;
-
-    const response = await api.get('/transactions/balance', { params });
+  getMyBalance: async (workspaceId: string) => {
+    const response = await api.get('/transactions/balance', { params: { workspaceId } });
     return response.data;
   },
 
@@ -983,10 +1048,11 @@ export const transactionsAPI = {
     return response.data;
   },
 
-  getChartData: async (workspaceId: string, days?: number) => {
-    const response = await api.get('/transactions/chart', {
-      params: { workspaceId, days }
-    });
+  getChartData: async (workspaceId: string, days?: number,) => {
+    const params: any = {};
+    if (days) params.days = days;
+    if (workspaceId) params.workspaceId = workspaceId;
+    const response = await api.get('/transactions/chart', { params });
     return response.data;
   },
 
@@ -1001,11 +1067,58 @@ export const transactionsAPI = {
   },
 
   notifySingles: async (workspaceId: string) => {
-    const response = await api.post(`/transactions/${workspaceId}/notify-singles`);
+    const endpoint = workspaceId ? `/transactions/${workspaceId}/notify-singles` : '/transactions/notify-singles';
+    const response = await api.post(endpoint);
     return response.data;
   }
 };
 
+
+/**
+ * API de Billing (Assinatura da plataforma)
+ */
+export const billingAPI = {
+  /**
+   * Retorna o status de assinatura do workspace atual
+   */
+  getStatus: async () => {
+    const response = await api.get('/billing/status');
+    return response.data;
+  },
+
+  /**
+   * Lista todos os planos disponíveis
+   */
+  getPlans: async () => {
+    const response = await api.get('/billing/plans');
+    return response.data;
+  },
+
+  /**
+   * Ativa um plano pago para o workspace (admin only)
+   */
+  activatePlan: async (plan: 'basico' | 'pro') => {
+    const response = await api.post('/billing/activate', { plan });
+    return response.data;
+  },
+
+  /**
+   * Cria um checkout Asaas com cartão de crédito e ativa o plano imediatamente
+   */
+  createCheckout: async (
+    plan: 'basico' | 'pro',
+    creditCard: { holderName: string; number: string; expiryMonth: string; expiryYear: string; ccv: string },
+    holderInfo: { name: string; cpfCnpj: string; postalCode: string; addressNumber: string; email?: string; phone?: string },
+  ) => {
+    const response = await api.post('/billing/checkout', { plan, creditCard, holderInfo });
+    return response.data;
+  },
+
+  cancelSubscription: async () => {
+    const response = await api.post('/billing/cancel');
+    return response.data;
+  },
+};
 
 export default api;
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BFLogo } from './BF-Logo';
 import { BFIcons } from './BF-Icons';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 export interface BFSidebarItem {
   id: string;
@@ -95,7 +96,7 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
         {/* Workspace Switcher (if applicable) */}
         {!isCollapsed && workspaces.length > 0 && (
           <div className="px-4 py-3 border-b border-[#1A2B42]">
-            <div className="text-[10px] text-white/50 uppercase tracking-wider mb-1">
+            <div className="text-[10px] text-white/70 uppercase tracking-wider mb-1">
               Grupo Atual
             </div>
             <div className="flex items-center justify-between group">
@@ -103,14 +104,12 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
                 {currentWorkspace?.name || 'Selecione...'}
               </div>
 
-              {workspaces.length > 1 && (
-                <button
-                  onClick={() => navigate('/select-workspace')}
-                  className="text-xs text-[#00D66F] hover:text-[#00D66F]/80 transition-colors whitespace-nowrap cursor-pointer"
-                >
-                  Trocar
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/select-workspace')}
+                className="text-xs text-[#00D66F] hover:text-[#00D66F]/80 transition-colors whitespace-nowrap cursor-pointer"
+              >
+                Trocar / Novo
+              </button>
             </div>
           </div>
         )}
@@ -139,37 +138,56 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
                     <div className="border-t border-[#1A2B42] my-2"></div>
                   )}
 
-                  <button
-                    onClick={() => {
-                      onItemClick(item.id);
-                      if (window.innerWidth < 1024 && isMobileOpen) {
-                        onMobileToggle?.();
-                      }
-                    }}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                      transition-all duration-200 cursor-pointer
-                      ${isActive
-                        ? 'bg-[#00D66F] text-white'
-                        : 'text-white hover:bg-[#1A2B42]'
-                      }
-                      ${isCollapsed ? 'justify-center' : ''}
-                    `}
-                    data-test={`sidebar-item-${item.id}`}
-                    title={isCollapsed ? item.label : undefined}
-                  >
-                    <Icon size={20} className="flex-shrink-0" />
-                    {!isCollapsed && (
-                      <>
-                        <span className="flex-1 text-left">{item.label}</span>
-                        {item.badge && (
-                          <span className="px-2 py-0.5 text-xs rounded-full bg-[--primary] text-white">
-                            {item.badge}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </button>
+                  {isCollapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => {
+                            onItemClick(item.id);
+                          }}
+                          className={`
+                            w-full flex items-center justify-center px-3 py-2.5 rounded-lg
+                            transition-all duration-200 cursor-pointer
+                            ${isActive
+                              ? 'bg-[#00D66F] text-white'
+                              : 'text-white hover:bg-[#1A2B42]'
+                            }
+                          `}
+                          data-test={`sidebar-item-${item.id}`}
+                          aria-label={item.label}
+                        >
+                          <Icon size={20} className="flex-shrink-0" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        onItemClick(item.id);
+                        if (window.innerWidth < 1024 && isMobileOpen) {
+                          onMobileToggle?.();
+                        }
+                      }}
+                      className={`
+                        w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                        transition-all duration-200 cursor-pointer
+                        ${isActive
+                          ? 'bg-[#00D66F] text-white'
+                          : 'text-white hover:bg-[#1A2B42]'
+                        }
+                      `}
+                      data-test={`sidebar-item-${item.id}`}
+                    >
+                      <Icon size={20} className="flex-shrink-0" />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.badge && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-[var(--primary)] text-white">
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </li>
               );
             })}
@@ -181,7 +199,7 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
           {!isCollapsed ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#00D66F] flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-full bg-[#00D66F] flex items-center justify-center text-white" aria-label={userName}>
                   {userName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -199,14 +217,19 @@ export const BFSidebar: React.FC<BFSidebarProps> = ({
               </button>
             </div>
           ) : (
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center p-2 rounded-lg text-[#EF4444] hover:bg-[#1A2B42] transition-colors"
-              data-test="sidebar-logout"
-              title="Sair"
-            >
-              <BFIcons.LogOut size={20} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center justify-center p-2 rounded-lg text-[#EF4444] hover:bg-[#1A2B42] transition-colors"
+                  data-test="sidebar-logout"
+                  aria-label="Sair"
+                >
+                  <BFIcons.LogOut size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sair</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </aside>

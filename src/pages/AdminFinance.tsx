@@ -165,7 +165,8 @@ export const AdminFinance: React.FC = () => {
                 amount: t.amount,
                 description: t.description || t.notes || '-',
                 status: t.status,
-                date: t.dueDate || t.createdAt,
+                createdAt: t.createdAt,
+                dueDate: t.dueDate,
                 user: t.user || t.userId
             }));
 
@@ -184,7 +185,9 @@ export const AdminFinance: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching financial data:', error);
-            toast.error('Erro ao carregar dados financeiros');
+            if (!(error as any)._isPlanRestriction) {
+                toast.error('Erro ao carregar dados financeiros');
+            }
         } finally {
             setLoading(false);
         }
@@ -243,18 +246,16 @@ export const AdminFinance: React.FC = () => {
                 </div>
 
                 {/* Grupo de Botões */}
-                {/* Mobile: Coluna (flex-col), Largura Total (w-full) */}
-                {/* Desktop (sm): Linha (flex-row), Largura Auto (w-auto) */}
-                <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
+                <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:flex-row">
 
                     <BFButton
                         variant="secondary"
                         icon={<BFIcons.MessageCircle size={20} />}
                         onClick={handleNotifyPendingInvoices}
                         disabled={isNotifying || loading}
-                        className="w-full sm:w-auto justify-center" // Força esticar no mobile
+                        className="w-full justify-center px-1 sm:px-4 text-xs sm:text-sm truncate"
                     >
-                        Cobrar Mensalidades
+                        Cobrar Mensais
                     </BFButton>
 
                     <BFButton
@@ -262,7 +263,7 @@ export const AdminFinance: React.FC = () => {
                         icon={<BFIcons.Bell size={20} />}
                         onClick={handleNotifySingles}
                         disabled={isNotifying || loading}
-                        className="w-full sm:w-auto justify-center"
+                        className="w-full justify-center px-1 sm:px-4 text-xs sm:text-sm truncate"
                     >
                         Cobrar Avulsos
                     </BFButton>
@@ -271,7 +272,7 @@ export const AdminFinance: React.FC = () => {
                         variant="primary"
                         icon={<BFIcons.Plus size={20} />}
                         onClick={() => setCreateOpen(true)}
-                        className="w-full sm:w-auto justify-center"
+                        className="col-span-2 sm:col-span-1 w-full justify-center"
                     >
                         Nova Transação
                     </BFButton>

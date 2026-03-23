@@ -1,10 +1,10 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
-import { RootRedirect } from '../components/RootRedirect';
 
 import AppLayout from '../layouts/AppLayout';
 
 import { Login } from '../pages/Login';
+import { CreateAccount } from '../pages/CreateAccount';
 
 import { AdminDashboard } from '../pages/AdminDashboard';
 import { ManageGames } from '../pages/ManageGames';
@@ -17,7 +17,6 @@ import { ManageChats } from '../pages/ManageChats';
 import ManageMemberships from '../pages/ManageMemberships';
 import { WorkspaceSettings } from '../pages/WorkspaceSettings';
 import { AdminFinance } from '../pages/AdminFinance';
-import { ChatSettings } from '../pages/ChatSettings';
 
 import { UserDashboard } from '../pages/UserDashboard';
 import { UserProfile } from '../pages/UserProfile';
@@ -26,6 +25,9 @@ import { BBQDetails } from '@/pages/BBQDetails';
 import { SelectWorkspace } from '../pages/SelectWorkspace';
 import NoWorkspace from '../pages/NoWorkspace';
 import { HelpPage } from '../pages/HelpPage';
+import { LandingPage } from '../pages/LandingPage';
+import { LandingPageV2 } from '../pages/LandingPageV2';
+import { Billing } from '../pages/Billing';
 
 export const router = createBrowserRouter([
   {
@@ -33,12 +35,12 @@ export const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: '/criar-conta',
+    element: <CreateAccount />,
+  },
+  {
     path: '/select-workspace',
-    element: (
-      <ProtectedRoute>
-        <SelectWorkspace />
-      </ProtectedRoute>
-    ),
+    element: <SelectWorkspace />,
   },
 
   {
@@ -48,18 +50,14 @@ export const router = createBrowserRouter([
 
   {
     path: '/no-workspace',
-    element: (
-      <ProtectedRoute>
-        <NoWorkspace />
-      </ProtectedRoute>
-    ),
+    element: <NoWorkspace />,
   },
 
   {
     path: '/admin',
     element: (
       <ProtectedRoute allowedRoles={['admin']}>
-        <AppLayout role="admin" />
+        <AppLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -108,10 +106,6 @@ export const router = createBrowserRouter([
         element: <ManageChats />,
       },
       {
-        path: 'chats/:chatId',
-        element: <ChatSettings />,
-      },
-      {
         path: 'memberships',
         element: <ManageMemberships />,
       },
@@ -131,6 +125,10 @@ export const router = createBrowserRouter([
         path: 'settings',
         element: <WorkspaceSettings />,
       },
+      {
+        path: 'billing',
+        element: <Billing />,
+      },
     ],
   },
 
@@ -138,7 +136,7 @@ export const router = createBrowserRouter([
     path: '/user',
     element: (
       <ProtectedRoute allowedRoles={['user', 'admin']}>
-        <AppLayout role="user" />
+        <AppLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -159,7 +157,12 @@ export const router = createBrowserRouter([
 
   {
     path: '/',
-    element: <RootRedirect />,
+    element: <LandingPage />,
+  },
+
+  {
+    path: '/v2',
+    element: <LandingPageV2 />,
   },
 
   {

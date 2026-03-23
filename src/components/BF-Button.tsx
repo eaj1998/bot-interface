@@ -2,7 +2,7 @@ import React from 'react';
 
 export interface BFButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'loading'> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'icon' | 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   isLoading?: boolean;
   loading?: boolean;
@@ -30,17 +30,17 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
   const getVariantClasses = (variant: string) => {
     switch (variant) {
       case 'primary':
-        return 'bg-[#00D66F] hover:bg-[#00A854] text-white shadow-sm';
+        return 'bg-primary hover:bg-[var(--bf-green-dark)] text-primary-foreground shadow-sm';
       case 'secondary':
-        return 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm';
+        return 'bg-secondary hover:bg-[var(--bf-blue-dark)] text-secondary-foreground shadow-sm';
       case 'outline':
-        return 'border-2 border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-600';
+        return 'border-2 border-secondary text-secondary bg-background hover:bg-secondary/10';
       case 'ghost':
-        return 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800';
+        return 'bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground';
       case 'danger':
-        return 'bg-red-600 hover:bg-red-700 text-white shadow-sm';
+        return 'bg-destructive hover:bg-destructive/80 text-destructive-foreground shadow-sm';
       case 'success':
-        return 'bg-green-600 hover:bg-green-700 text-white shadow-sm';
+        return 'bg-[var(--success)] hover:bg-[var(--bf-green-dark)] text-[var(--success-foreground)] shadow-sm';
       default:
         return '';
     }
@@ -48,6 +48,7 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
 
   const getSizeClasses = (size: string) => {
     switch (size) {
+      case 'icon': return 'h-8 w-8';
       case 'sm': return 'h-8 px-3 gap-1.5';
       case 'md': return 'h-10 px-4 gap-2';
       case 'lg': return 'h-12 px-6 gap-2.5';
@@ -72,6 +73,7 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
       ref={ref}
       className={combinedClasses}
       disabled={disabled || isButtonLoading}
+      aria-busy={isButtonLoading}
       data-test={dataTest}
       {...restProps}
     >
@@ -81,6 +83,7 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <circle
             className="opacity-25"
@@ -98,7 +101,7 @@ export const BFButton = React.forwardRef<HTMLButtonElement, BFButtonProps>(({
         </svg>
       )}
       {!isButtonLoading && icon && iconPosition === 'left' && <span className="flex-shrink-0">{icon}</span>}
-      <span className="truncate">{children}</span>
+      <span className={`truncate ${isButtonLoading ? 'opacity-50' : ''}`}>{children}</span>
       {!isButtonLoading && icon && iconPosition === 'right' && <span className="flex-shrink-0">{icon}</span>}
     </button>
   );

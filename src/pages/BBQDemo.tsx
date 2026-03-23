@@ -47,7 +47,9 @@ export const BBQDemo: React.FC = () => {
             setBbqs(bbqData);
         } catch (error: any) {
             console.error('Error fetching BBQs:', error);
-            toast.error(error.response?.data?.message || 'Erro ao carregar churrascos');
+            if (!(error as any)._isPlanRestriction) {
+                toast.error(error.response?.data?.message || 'Erro ao carregar churrascos');
+            }
             setBbqs([]);
         } finally {
             setLoading(false);
@@ -79,12 +81,12 @@ export const BBQDemo: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-[--foreground]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+                <div className="w-full">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[--foreground]">
                         Gerenciar Churrascos
                     </h1>
-                    <p className="text-[--muted-foreground] mt-2">
+                    <p className="text-[--muted-foreground] mt-1 sm:mt-2">
                         Crie e gerencie eventos de churrasco
                     </p>
                 </div>
@@ -93,6 +95,7 @@ export const BBQDemo: React.FC = () => {
                     icon={<BFIcons.Plus size={20} />}
                     onClick={() => setIsCreateModalOpen(true)}
                     data-test="create-bbq-button"
+                    className="w-full sm:w-auto justify-center"
                 >
                     Novo Churrasco
                 </BFButton>

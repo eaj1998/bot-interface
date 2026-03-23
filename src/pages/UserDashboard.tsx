@@ -18,7 +18,6 @@ import { ManageSubscriptionModal } from '../components/subscription/ManageSubscr
 
 export const UserDashboard: React.FC = () => {
   const { user, currentWorkspace, refreshUser, loading: authLoading } = useAuth();
-  console.log('Current Workspace:', currentWorkspace);
 
   const [membership, setMembership] = useState<Membership | null>(null);
   const [balance, setBalance] = useState<IFinancialBalance>({ totalPending: 0, history: [] });
@@ -31,62 +30,76 @@ export const UserDashboard: React.FC = () => {
   const [manageModalOpen, setManageModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
+  // Initial user refresh - only if needed or on mount once
   useEffect(() => {
     const initUser = async () => {
-      await refreshUser();
+      if (!user) {
+        await refreshUser();
+      }
     };
     initUser();
-  }, []);
+  }, [refreshUser]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       if (authLoading) return;
 
-      if (!user || !user.id || !currentWorkspace?.id) {
-        console.log('UserDashboard: Missing dependencies, aborting fetch.');
-
-        setLoading(false);
+      // Use primitive IDs for checks to avoid object reference issues
+      if (!user?.id || !currentWorkspace?.id) {
+        // console.log('UserDashboard: Missing dependencies (user or workspace), aborting fetch.');
+        if (isMounted) setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        if (isMounted) setLoading(true);
 
-        try {
-          const membershipResponse = await membershipsAPI.getMyMembership(currentWorkspace.id);
-          const membershipData = membershipResponse.data || membershipResponse.membership;
+        // Execute requests in parallel
+        const [membershipResponse, balanceData, gamesResponse] = await Promise.all([
+          membershipsAPI.getMyMembership(currentWorkspace.id).catch(err => {
+            console.log('No membership found or error', err);
+            return null;
+          }),
+          transactionsAPI.getMyBalance(currentWorkspace.id).catch(err => {
+            console.error('Error fetching balance', err);
+            return { totalPending: 0, history: [] }; // Fallback
+          }),
+          // getAllGames(page, limit, status...) -> status='open'
+          gamesAPI.getAllGames(1, 10, 'open').catch(err => {
+            console.error('Error fetching games', err);
+            return { data: [] };
+          })
+        ]);
 
-          if (membershipData) {
+        if (!isMounted) return;
+
+        // Process Membership
+        if (membershipResponse) {
+          let mData = membershipResponse;
+          if (mData.data) mData = mData.data;
+          if (mData.membership) mData = mData.membership;
+
+          if (mData && (mData.status || mData.planValueCents !== undefined)) { // Basic validation
             setMembership({
-              ...membershipData,
-              id: membershipData.id || membershipData._id,
-              planValue: membershipData.planValueCents ? membershipData.planValueCents / 100 : 0,
-              planValueCents: membershipData.planValueCents || 0
+              ...mData,
+              id: mData.id || mData._id,
+              planValue: mData.planValueCents ? mData.planValueCents / 100 : 0,
+              planValueCents: mData.planValueCents || 0
             });
           } else {
             setMembership(null);
           }
-        } catch (err) {
-          console.log('No membership found', err);
+        } else {
+          setMembership(null);
         }
 
-        try {
-          const balanceData = await transactionsAPI.getMyBalance(currentWorkspace.id);
-          setBalance(balanceData);
-        } catch (err) {
-          console.error('Error fetching balance', err);
-        }
+        // Process Balance
+        setBalance(balanceData || { totalPending: 0, history: [] });
 
-        // Fetch Games - usage of getAllGames with filter as requested
-        // Note: getAllGames might need workspaceId filter if it supports it, 
-        // to avoid seeing games from other workspaces if the API isn't scoped implicitly.
-        // Assuming getAllGames is global or handles scope via session/interceptor?
-        // Actually, let's verify if getAllGames takes workspaceId.
-        // Looking at axios.ts, getAllGames takes (page, limit, status, search). 
-        // It does NOT take workspaceId explicity. But interceptor adds x-workspace-id.
-        const gamesResponse = await gamesAPI.getAllGames(1, 10, 'open');
-        const gamesData = gamesResponse.data || gamesResponse;
-
+        // Process Games
+        const gamesData = gamesResponse?.data || gamesResponse || [];
         const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
           ...game,
           id: game.id || game._id,
@@ -94,7 +107,7 @@ export const UserDashboard: React.FC = () => {
           status: game.status === 'open' ? 'scheduled' : game.status,
           rawDate: game.date,
           formattedDate: formatEventDate(game.date),
-          time: formatEventTime(game.date),
+          time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
           location: game.location || 'A definir',
           pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
           currentPlayers: game.currentPlayers ?? 0,
@@ -106,15 +119,20 @@ export const UserDashboard: React.FC = () => {
         setGames(mappedGames);
 
       } catch (error: any) {
-        console.error('Error fetching data:', error);
-        setError('Erro ao carregar dados');
+        console.error('Error fetching dashboard data:', error);
+        if (isMounted) setError('Erro ao carregar dados');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchData();
-  }, [user, currentWorkspace, authLoading]);
+
+    return () => {
+      isMounted = false;
+    };
+    // CRITICAL: Depend only on IDs (primitives) to prevent infinite loops from object references
+  }, [user?.id, currentWorkspace?.id, authLoading]);
 
   const handlePayTransaction = (transactionId: string) => {
     setSelectedTransactionId(transactionId);
@@ -129,7 +147,10 @@ export const UserDashboard: React.FC = () => {
         setBalance(balanceData);
 
         const mResponse = await membershipsAPI.getMyMembership(currentWorkspace.id);
-        const mData = mResponse.data || mResponse.membership;
+        let mData = mResponse;
+        if (mData.data) mData = mData.data;
+        if (mData.membership) mData = mData.membership;
+
         if (mData) {
           setMembership({
             ...mData,
@@ -153,16 +174,11 @@ export const UserDashboard: React.FC = () => {
     try {
       const loadingToast = toast.loading('Entrando na lista...');
 
-      // Call API to add player
-      // We assume isGoalkeeper false for quick join, or could add a dialog later if needed
       await gamesAPI.addPlayerToGame(gameId, user.phone, user.name, false);
 
       toast.dismiss(loadingToast);
       toast.success('Presença Confirmada! ⚽');
 
-      // Refresh games list to show updated status
-      // We call the internal fetch logic again or a dedicated refresher
-      // Ideally we extract fetch logic to a useCallback, but for now specific reload:
       const gamesResponse = await gamesAPI.getAllGames(1, 10, 'open');
       const gamesData = gamesResponse.data || gamesResponse;
       const mappedGames = Array.isArray(gamesData) ? gamesData.map((game: any) => ({
@@ -172,7 +188,7 @@ export const UserDashboard: React.FC = () => {
         status: game.status === 'open' ? 'scheduled' : game.status,
         rawDate: game.date,
         formattedDate: formatDateWithoutTimezone(game.date),
-        time: game.time,
+        time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
         location: game.location || 'A definir',
         pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
         currentPlayers: game.currentPlayers ?? 0,
@@ -220,7 +236,7 @@ export const UserDashboard: React.FC = () => {
         status: game.status === 'open' ? 'scheduled' : game.status,
         rawDate: game.date,
         formattedDate: formatDateWithoutTimezone(game.date),
-        time: game.time,
+        time: game.time ? game.time.replace(':', 'h') : formatEventTime(game.date),
         location: game.location || 'A definir',
         pricePerPlayer: game.pricePerPlayer || (game.priceCents ? game.priceCents / 100 : 0),
         currentPlayers: game.currentPlayers ?? 0,
@@ -290,18 +306,18 @@ export const UserDashboard: React.FC = () => {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Total Pending */}
-        <BFCard variant="stat" padding="md">
+        <BFCard variant="elevated" padding="md" className="bg-gradient-to-br from-orange-500 to-red-600 border-0">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm sm:text-base text-white/80 mb-1">Pendências</p>
-              <h2 className="text-xl sm:text-2xl text-white">
+              <p className="text-sm sm:text-base text-white/90 font-medium mb-1">Pendências</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
                 R$ {balance.totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </h2>
             </div>
-            <div className="bg-white/20 p-2 sm:p-3 rounded-lg">
-              <BFIcons.DollarSign size={20} color="white" className="sm:w-6 sm:h-6" />
+            <div className="bg-white/20 p-2 sm:p-3 rounded-lg backdrop-blur-sm">
+              <BFIcons.AlertCircle size={20} color="white" className="sm:w-6 sm:h-6" />
             </div>
           </div>
         </BFCard>
@@ -310,10 +326,10 @@ export const UserDashboard: React.FC = () => {
         <BFCard variant="elevated" padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm sm:text-base text-[--muted-foreground] mb-1">Próximos Jogos</p>
-              <h2 className="text-xl sm:text-2xl text-[--foreground]">{games.length}</h2>
+              <p className="text-sm sm:text-base font-medium text-[--muted-foreground] mb-1">Próximos Jogos</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-[--foreground]">{games.length}</h2>
             </div>
-            <div className="bg-[--accent] p-2 sm:p-3 rounded-lg">
+            <div className="bg-[--primary]/10 p-2 sm:p-3 rounded-lg">
               <BFIcons.Trophy size={20} color="var(--primary)" className="sm:w-6 sm:h-6" />
             </div>
           </div>

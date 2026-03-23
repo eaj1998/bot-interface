@@ -127,7 +127,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
 
     try {
       setClosingGame(true);
-      await gamesAPI.closeGame(gameToClose, gameInfo.workspaceId);
+      await gamesAPI.closeGame(gameToClose);
       toast.success('✅ Jogo fechado com sucesso!');
       setGameToClose(null);
       fetchGameDetails();
@@ -168,7 +168,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
 
     try {
       setCancelingGame(true);
-      await gamesAPI.deleteGame(gameToCancel, gameInfo.workspaceId);
+      await gamesAPI.deleteGame(gameToCancel);
       toast.success('🚫 Jogo cancelado com sucesso!');
       setGameToCancel(null);
       navigate('/admin/games');
@@ -202,7 +202,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
     try {
       setSearchingPlayers(true);
       const response = await playersAPI.searchPlayers(search);
-      setSearchResults(response.players || []);
+      setSearchResults(response.data || []);
     } catch (error: any) {
       console.error('Error searching players:', error);
       toast.error('Erro ao buscar jogadores');
@@ -266,7 +266,7 @@ export const GameDetail: React.FC<GameDetailProps> = ({ gameId: propGameId, onBa
         return;
       }
 
-      await gamesAPI.updateGame(gameId, { pricePerPlayer: price });
+      await gamesAPI.updateGame(gameId, { pricePerPlayer: Math.round(price * 100) });
       toast.success('Valor atualizado com sucesso!');
       setIsEditingPrice(false);
       fetchGameDetails();
