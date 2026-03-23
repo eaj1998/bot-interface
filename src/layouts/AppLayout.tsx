@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { BFSidebar, BFSidebarItem } from '../components/BF-Sidebar';
 import { BFIcons } from '../components/BF-Icons';
 import { useAuth } from '../hooks/useAuth';
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { billingAPI } from '../lib/axios';
 
 
 export default function AppLayout() {
@@ -21,6 +22,8 @@ export default function AppLayout() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -31,6 +34,25 @@ export default function AppLayout() {
 
   // NEW: Workspace Protection & Redirection
   const { currentWorkspace, workspaces, loading } = useAuth();
+
+  const refreshBillingStatus = () => {
+    if (!currentWorkspace?.id) return;
+    billingAPI.getStatus()
+      .then((res) => {
+        setSubscriptionStatus(res.data?.status ?? null);
+        setTrialDaysLeft(res.data?.daysUntilTrialExpiry ?? null);
+      })
+      .catch(() => { /* silently fail — don't block the UI */ });
+  };
+
+  useEffect(() => {
+    refreshBillingStatus();
+  }, [currentWorkspace?.id]);
+
+  useEffect(() => {
+    window.addEventListener('billing:activated', refreshBillingStatus);
+    return () => window.removeEventListener('billing:activated', refreshBillingStatus);
+  }, [currentWorkspace?.id]);
 
   // Derive role dynamically
   const userRole = currentWorkspace?.role?.toLowerCase() || 'user';
@@ -88,6 +110,8 @@ export default function AppLayout() {
       setActiveItem('chats');
     } else if (currentPath.startsWith('/admin/memberships')) {
       setActiveItem('memberships');
+    } else if (currentPath.startsWith('/admin/billing')) {
+      setActiveItem('billing');
     } else if (currentPath.startsWith('/admin/my-dashboard')) {
       setActiveItem('my-dashboard');
     } else if (currentPath.startsWith('/admin/my-profile')) {
@@ -325,6 +349,20 @@ export default function AppLayout() {
                     <BFIcons.User size={18} />
                     <span>Meu Perfil</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={() => navigate('/admin/settings')}
+                  >
+                    <BFIcons.Settings size={18} />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={() => navigate('/admin/billing')}
+                  >
+                    <BFIcons.Wallet size={18} />
+                    <span>Assinatura</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer"
@@ -342,6 +380,33 @@ export default function AppLayout() {
             </div>
           </div>
         </header>
+
+        {/* Subscription banners */}
+        {subscriptionStatus === 'expired' && (
+          <div className="bg-red-600 text-white text-sm px-4 py-2 flex items-center justify-between gap-2">
+            <span>
+              ⚠️ <strong>Assinatura expirada.</strong> O bot e o painel estão bloqueados.
+            </span>
+            <Link to="/admin/billing" className="underline font-semibold whitespace-nowrap">
+              Assinar agora →
+            </Link>
+          </div>
+        )}
+        {subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft <= 5 && (
+          <div className="bg-amber-500 text-white text-sm px-4 py-2 flex items-center justify-between gap-2">
+            <span>
+              ⏳ <strong>
+                {trialDaysLeft === 0
+                  ? 'Seu trial expira hoje!'
+                  : `Seu trial expira em ${trialDaysLeft} dia${trialDaysLeft === 1 ? '' : 's'}.`}
+              </strong>{' '}
+              Assine para continuar.
+            </span>
+            <Link to="/admin/billing" className="underline font-semibold whitespace-nowrap">
+              Ver planos →
+            </Link>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-[--background]">

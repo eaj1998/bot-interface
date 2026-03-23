@@ -11,6 +11,13 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import {
     LogOut,
@@ -23,13 +30,20 @@ import {
     ArrowRight,
     Sparkles,
     User,
+    Settings,
+    Calendar,
+    Clock,
+    CircleDollarSign,
+    KeyRound,
+    Users,
+    ChevronRight,
+    SkipForward,
 } from 'lucide-react';
 import { createWorkspace, CreatedWorkspace } from '@/services/workspace.service';
-import { authAPI, tokenService } from '@/lib/axios';
-
+import { authAPI, tokenService, workspacesAPI, chatsAPI } from '@/lib/axios';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Step = 'profile' | 'form' | 'success';
+type Step = 'profile' | 'form' | 'configure' | 'success';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const looksLikePhone = (name: string) =>
@@ -43,6 +57,71 @@ const toSlug = (value: string) =>
         .replace(/[^a-z0-9\s-]/g, '')
         .trim()
         .replace(/\s+/g, '-');
+
+const formatCents = (cents: string): string => {
+    const num = cents.replace(/\D/g, '');
+    if (!num) return '';
+    const value = parseInt(num) / 100;
+    return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const parseCentsFromInput = (value: string): number => {
+    const digits = value.replace(/\D/g, '');
+    return digits ? parseInt(digits) : 0;
+};
+
+const weekdayOptions = [
+    { value: '0', label: 'Domingo' },
+    { value: '1', label: 'Segunda-feira' },
+    { value: '2', label: 'Terça-feira' },
+    { value: '3', label: 'Quarta-feira' },
+    { value: '4', label: 'Quinta-feira' },
+    { value: '5', label: 'Sexta-feira' },
+    { value: '6', label: 'Sábado' },
+];
+
+// ─── Step Indicator ──────────────────────────────────────────────────────────
+const STEPS: { key: Step; label: string }[] = [
+    { key: 'profile', label: 'Perfil' },
+    { key: 'form', label: 'Grupo' },
+    { key: 'success', label: 'Ativar' },
+    { key: 'configure', label: 'Configurar' },
+];
+
+const StepIndicator: React.FC<{ current: Step }> = ({ current }) => {
+    const currentIndex = STEPS.findIndex((s) => s.key === current);
+
+    return (
+        <div className="flex items-center justify-center gap-1.5">
+            {STEPS.map((s, i) => {
+                const isPast = i < currentIndex;
+                const isCurrent = i === currentIndex;
+                return (
+                    <React.Fragment key={s.key}>
+                        <div className="flex flex-col items-center gap-1">
+                            <div
+                                className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                                    isPast
+                                        ? 'bg-primary'
+                                        : isCurrent
+                                        ? 'bg-primary ring-4 ring-primary/20 h-3 w-3'
+                                        : 'bg-muted-foreground/30'
+                                }`}
+                            />
+                        </div>
+                        {i < STEPS.length - 1 && (
+                            <div
+                                className={`h-px w-8 transition-all duration-300 ${
+                                    isPast ? 'bg-primary' : 'bg-muted-foreground/20'
+                                }`}
+                            />
+                        )}
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const NoWorkspace: React.FC = () => {
@@ -61,9 +140,17 @@ const NoWorkspace: React.FC = () => {
     const [isFinishing, setIsFinishing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // ── Config step state ──────────────────────────────────────────────────────
+    const [weekday, setWeekday] = useState('5'); // Friday
+    const [gameTime, setGameTime] = useState('20:00');
+    const [gameTitle, setGameTitle] = useState('');
+    const [maxPlayers, setMaxPlayers] = useState('14');
+    const [priceDisplay, setPriceDisplay] = useState('');
+    const [pixKey, setPixKey] = useState('');
+
     // ── Init: skip profile step if user already has a real name ────────────────
     useEffect(() => {
-        if (user && !looksLikePhone(user.name) && user.name?.trim()) {
+        if (step === 'profile' && user && !looksLikePhone(user.name) && user.name?.trim()) {
             setStep('form');
         }
     }, [user]);
@@ -85,6 +172,11 @@ const NoWorkspace: React.FC = () => {
         setWorkspaceSlug(toSlug(e.target.value));
     };
 
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/\D/g, '');
+        setPriceDisplay(raw ? formatCents(raw) : '');
+    };
+
     const handleSaveName = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!displayName.trim()) return;
@@ -95,19 +187,15 @@ const NoWorkspace: React.FC = () => {
         try {
             const updatedProfile = await authAPI.updateAuthProfile({ name: displayName.trim() });
 
-            // Merge the response into the stored user and broadcast via AuthContext
             const stored = tokenService.getUser();
             const merged = {
                 ...(stored ?? {}),
                 ...(updatedProfile ?? {}),
-                // Ensure the name is always the value the user typed
                 name: displayName.trim(),
             };
             tokenService.setUser(merged);
             updateUser(merged as any);
 
-            // useEffect will detect the valid name and skip the profile step;
-            // we also advance manually for an instant transition.
             setStep('form');
         } catch (err: any) {
             const message =
@@ -145,6 +233,57 @@ const NoWorkspace: React.FC = () => {
         }
     };
 
+    const handleSaveConfig = async (skip = false) => {
+        setIsSubmitting(true);
+        setError(null);
+
+        if (!skip && createdWorkspace) {
+            try {
+                const priceCents = parseCentsFromInput(priceDisplay.replace(/\./g, '').replace(',', ''));
+
+                await workspacesAPI.updateWorkspace(createdWorkspace.id, {
+                    settings: {
+                        ...(maxPlayers ? { maxPlayers: parseInt(maxPlayers) } : {}),
+                        ...(priceCents > 0 ? { pricePerGameCents: priceCents } : {}),
+                        ...(pixKey.trim() ? { pix: pixKey.trim() } : {}),
+                    },
+                });
+            } catch {
+                // Don't block on workspace update failure
+            }
+
+            try {
+                const chatsData = await chatsAPI.getChatsByWorkspace();
+                const chats = Array.isArray(chatsData) ? chatsData : (chatsData.chats ?? []);
+                if (chats.length > 0) {
+                    const priceCents = parseCentsFromInput(priceDisplay.replace(/\./g, '').replace(',', ''));
+                    await chatsAPI.updateChat(chats[0].id, {
+                        schedule: {
+                            weekday: parseInt(weekday),
+                            time: gameTime,
+                            ...(gameTitle.trim() ? { title: gameTitle.trim() } : {}),
+                            ...(priceCents > 0 ? { priceCents } : {}),
+                            ...(pixKey.trim() ? { pix: pixKey.trim() } : {}),
+                        },
+                        settings: {
+                            ...(maxPlayers ? { maxPlayersPerGame: parseInt(maxPlayers) } : {}),
+                        },
+                        financials: {
+                            ...(priceCents > 0 ? { defaultPriceCents: priceCents } : {}),
+                            ...(pixKey.trim() ? { pixKey: pixKey.trim() } : {}),
+                        },
+                    });
+                }
+            } catch {
+                // Don't block on chat update failure
+            }
+        }
+
+        setIsSubmitting(false);
+        const role = (user?.role || '').toLowerCase();
+        navigate(role === 'admin' || role === 'owner' ? '/admin/dashboard' : '/user/dashboard');
+    };
+
     const handleCopyCommand = async () => {
         try {
             await navigator.clipboard.writeText(bindCommand);
@@ -164,13 +303,12 @@ const NoWorkspace: React.FC = () => {
         setIsFinishing(true);
         try {
             await refreshUser();
-            const role = (user?.role || '').toLowerCase();
-            navigate(role === 'admin' || role === 'owner' ? '/admin/dashboard' : '/user/dashboard');
         } catch {
-            navigate('/user/dashboard');
+            // Proceed even if refresh fails
         } finally {
             setIsFinishing(false);
         }
+        setStep('configure');
     };
 
     const handleSignOut = async () => {
@@ -183,6 +321,8 @@ const NoWorkspace: React.FC = () => {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
                 <div className="w-full max-w-md space-y-6">
+                    <StepIndicator current="profile" />
+
                     <div className="text-center space-y-3">
                         <div className="flex justify-center">
                             <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center ring-1 ring-primary/20">
@@ -262,6 +402,8 @@ const NoWorkspace: React.FC = () => {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
                 <div className="w-full max-w-md space-y-6">
+                    <StepIndicator current="form" />
+
                     <div className="text-center space-y-3">
                         <div className="flex justify-center">
                             <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center ring-1 ring-primary/20">
@@ -338,7 +480,7 @@ const NoWorkspace: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            Criar Workspace
+                                            Continuar
                                             <ArrowRight className="ml-2 h-4 w-4" />
                                         </>
                                     )}
@@ -358,10 +500,190 @@ const NoWorkspace: React.FC = () => {
         );
     }
 
+    // ── Render: Configure Step ─────────────────────────────────────────────────
+    if (step === 'configure') {
+        return (
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 py-10">
+                <div className="w-full max-w-lg space-y-6">
+                    <StepIndicator current="configure" />
+
+                    <div className="text-center space-y-3">
+                        <div className="flex justify-center">
+                            <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center ring-1 ring-primary/20">
+                                <Settings className="h-8 w-8 text-primary" />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <h1 className="text-2xl font-bold tracking-tight">Configure seu jogo</h1>
+                            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                                Essas informações ajudam o bot a gerenciar sua pelada automaticamente.
+                            </p>
+                        </div>
+                    </div>
+
+                    <Card className="border-border/60 shadow-sm">
+                        <CardContent className="p-0">
+                            {/* Agendamento */}
+                            <div className="p-5 space-y-4">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    Quando é a sua pelada?
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="weekday">Dia da semana</Label>
+                                        <Select value={weekday} onValueChange={setWeekday}>
+                                            <SelectTrigger id="weekday">
+                                                <SelectValue placeholder="Selecione..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {weekdayOptions.map((opt) => (
+                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="game-time">
+                                            <Clock className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                                            Horário
+                                        </Label>
+                                        <Input
+                                            id="game-time"
+                                            type="time"
+                                            value={gameTime}
+                                            onChange={(e) => setGameTime(e.target.value)}
+                                            className="[&::-webkit-calendar-picker-indicator]:opacity-50"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="game-title">
+                                        Título da lista de presença
+                                        <span className="ml-1.5 text-xs text-muted-foreground font-normal">(opcional)</span>
+                                    </Label>
+                                    <Input
+                                        id="game-title"
+                                        placeholder="Ex: ⚽ PELADA DA SEXTA"
+                                        value={gameTitle}
+                                        onChange={(e) => setGameTitle(e.target.value)}
+                                        maxLength={80}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Aparece no cabeçalho quando o bot abre a lista de presença.</p>
+                                </div>
+                            </div>
+
+                            {/* Financeiro */}
+                            <div className="p-5 border-t border-border/60 space-y-4">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <CircleDollarSign className="h-3.5 w-3.5" />
+                                    Financeiro
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="price">Valor por jogador</Label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none font-medium">R$</span>
+                                            <Input
+                                                id="price"
+                                                placeholder="0,00"
+                                                value={priceDisplay}
+                                                onChange={handlePriceChange}
+                                                className="pl-9"
+                                                inputMode="numeric"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="max-players">
+                                            <Users className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                                            Máx. jogadores
+                                        </Label>
+                                        <Input
+                                            id="max-players"
+                                            type="number"
+                                            min={1}
+                                            max={100}
+                                            placeholder="14"
+                                            value={maxPlayers}
+                                            onChange={(e) => setMaxPlayers(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pix-key">
+                                        <KeyRound className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+                                        Chave Pix
+                                        <span className="ml-1.5 text-xs text-muted-foreground font-normal">(opcional)</span>
+                                    </Label>
+                                    <Input
+                                        id="pix-key"
+                                        placeholder="CPF, e-mail, telefone ou chave aleatória"
+                                        value={pixKey}
+                                        onChange={(e) => setPixKey(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        O bot usará essa chave para solicitar pagamentos dos jogadores.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="space-y-3">
+                        <Button
+                            className="w-full"
+                            onClick={() => handleSaveConfig(false)}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Salvando...
+                                </>
+                            ) : (
+                                <>
+                                    Salvar e continuar
+                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            className="w-full text-muted-foreground"
+                            onClick={() => handleSaveConfig(true)}
+                            disabled={isSubmitting}
+                        >
+                            <SkipForward className="mr-2 h-4 w-4" />
+                            Pular por agora
+                        </Button>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleSignOut}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sair da conta
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // ── Render: Success Step ───────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-lg space-y-6">
+                <StepIndicator current="success" />
+
                 <div className="text-center space-y-3">
                     <div className="flex justify-center">
                         <div className="h-16 w-16 bg-green-500/10 rounded-2xl flex items-center justify-center ring-1 ring-green-500/30">
@@ -462,9 +784,15 @@ const NoWorkspace: React.FC = () => {
                             </>
                         )}
                     </Button>
-                    <p className="text-center text-xs text-muted-foreground">
-                        Você pode fazer isso depois. O bot ficará aguardando o comando no grupo.
-                    </p>
+                    <Button
+                        variant="ghost"
+                        className="w-full text-muted-foreground"
+                        onClick={() => setStep('configure')}
+                        disabled={isFinishing}
+                    >
+                        <SkipForward className="mr-2 h-4 w-4" />
+                        Fazer isso depois
+                    </Button>
                 </div>
 
                 <div className="flex justify-center">

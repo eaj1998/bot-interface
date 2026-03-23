@@ -26,6 +26,8 @@ import { SelectWorkspace } from '../pages/SelectWorkspace';
 import NoWorkspace from '../pages/NoWorkspace';
 import { HelpPage } from '../pages/HelpPage';
 import { LandingPage } from '../pages/LandingPage';
+import { LandingPageV2 } from '../pages/LandingPageV2';
+import { Billing } from '../pages/Billing';
 
 export const router = createBrowserRouter([
   {
@@ -123,6 +125,10 @@ export const router = createBrowserRouter([
         path: 'settings',
         element: <WorkspaceSettings />,
       },
+      {
+        path: 'billing',
+        element: <Billing />,
+      },
     ],
   },
 
@@ -152,6 +158,11 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <LandingPage />,
+  },
+
+  {
+    path: '/v2',
+    element: <LandingPageV2 />,
   },
 
   {

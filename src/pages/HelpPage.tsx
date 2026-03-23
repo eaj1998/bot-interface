@@ -216,7 +216,7 @@ export const HelpPage = () => {
                                 <h3 className="text-xl font-semibold text-slate-900 mb-2">Nenhum comando encontrado</h3>
                                 <p className="text-slate-500 max-w-sm mx-auto">Não encontramos comandos correspondentes à sua busca. Tente usar outras palavras-chave ou limpe os filtros.</p>
                                 <Button
-                                    variant="outline"
+                                    variant="secondary"
                                     className="mt-6 rounded-full px-6"
                                     onClick={() => {
                                         setSearchTerm('');

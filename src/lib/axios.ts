@@ -16,6 +16,11 @@ let failedQueue: Array<{
   reject: (error: Error) => void;
 }> = [];
 
+// Prevents multiple 402 toasts firing when several requests fail simultaneously
+let isHandling402 = false;
+// Prevents multiple plan-restriction 403 toasts firing when several requests fail simultaneously
+let isHandling403Plan = false;
+
 // Helper to fully clear session including backend HTTP-only cookies
 const forceLogout = async () => {
   try {
@@ -101,21 +106,55 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Handle 403 Forbidden (e.g., early access restriction for future games)
+    // Handle 402 Payment Required (subscription expired)
+    if (error.response?.status === 402) {
+      const onBillingPage = window.location.pathname === '/admin/billing';
+
+      if (onBillingPage) {
+        // Already on billing — swallow silently so no component shows error states
+        return new Promise(() => {}); // never resolves or rejects
+      }
+
+      if (!isHandling402) {
+        isHandling402 = true;
+        window.location.href = '/admin/billing';
+        // isHandling402 resets on next page load naturally (module is re-evaluated)
+      }
+      return new Promise(() => {}); // pending promise stops error propagation
+    }
+
+    // Handle 403 Forbidden
     if (error.response?.status === 403) {
       const url = error.config?.url || '';
       const isAuthOrWorkspaceCall = url.includes('/auth/') || url.includes('/workspaces');
       if (!isAuthOrWorkspaceCall) {
-        const message = (error.response.data as any)?.message ||
-          'Acesso restrito a mensalistas para jogos futuros';
+        const message = (error.response.data as any)?.message || '';
+        const isPlanRestriction = message.includes('plano') || message.includes('upgrade');
 
-        // Dynamically import toast to avoid circular dependencies
-        import('sonner').then(({ toast }) => {
-          toast.error(message, {
-            description: 'Torne-se um mensalista para ter early access aos jogos!',
-            duration: 5000,
+        if (isPlanRestriction) {
+          // Dedup: show only one toast across concurrent plan-gated requests
+          if (!isHandling403Plan) {
+            isHandling403Plan = true;
+            import('sonner').then(({ toast }) => {
+              toast.error('Plano insuficiente', {
+                description: message || 'Esta funcionalidade requer um plano superior.',
+                duration: 6000,
+              });
+            });
+            setTimeout(() => { isHandling403Plan = false; }, 3000);
+          }
+          // Tag the error so catch blocks can suppress duplicate toasts
+          (error as any)._isPlanRestriction = true;
+          return Promise.reject(error);
+        } else {
+          // Early-access restriction for players trying to sign up for future games
+          import('sonner').then(({ toast }) => {
+            toast.error(message || 'Acesso restrito a mensalistas para jogos futuros', {
+              description: 'Torne-se um mensalista para ter early access aos jogos!',
+              duration: 5000,
+            });
           });
-        });
+        }
       }
 
       return Promise.reject(error);
@@ -1034,6 +1073,52 @@ export const transactionsAPI = {
   }
 };
 
+
+/**
+ * API de Billing (Assinatura da plataforma)
+ */
+export const billingAPI = {
+  /**
+   * Retorna o status de assinatura do workspace atual
+   */
+  getStatus: async () => {
+    const response = await api.get('/billing/status');
+    return response.data;
+  },
+
+  /**
+   * Lista todos os planos disponíveis
+   */
+  getPlans: async () => {
+    const response = await api.get('/billing/plans');
+    return response.data;
+  },
+
+  /**
+   * Ativa um plano pago para o workspace (admin only)
+   */
+  activatePlan: async (plan: 'basico' | 'pro') => {
+    const response = await api.post('/billing/activate', { plan });
+    return response.data;
+  },
+
+  /**
+   * Cria um checkout Asaas com cartão de crédito e ativa o plano imediatamente
+   */
+  createCheckout: async (
+    plan: 'basico' | 'pro',
+    creditCard: { holderName: string; number: string; expiryMonth: string; expiryYear: string; ccv: string },
+    holderInfo: { name: string; cpfCnpj: string; postalCode: string; addressNumber: string; email?: string; phone?: string },
+  ) => {
+    const response = await api.post('/billing/checkout', { plan, creditCard, holderInfo });
+    return response.data;
+  },
+
+  cancelSubscription: async () => {
+    const response = await api.post('/billing/cancel');
+    return response.data;
+  },
+};
 
 export default api;
 
