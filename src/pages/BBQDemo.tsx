@@ -47,7 +47,9 @@ export const BBQDemo: React.FC = () => {
             setBbqs(bbqData);
         } catch (error: any) {
             console.error('Error fetching BBQs:', error);
-            toast.error(error.response?.data?.message || 'Erro ao carregar churrascos');
+            if (!(error as any)._isPlanRestriction) {
+                toast.error(error.response?.data?.message || 'Erro ao carregar churrascos');
+            }
             setBbqs([]);
         } finally {
             setLoading(false);

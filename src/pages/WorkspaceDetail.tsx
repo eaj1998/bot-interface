@@ -392,7 +392,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
               )) || <span className="text-[--muted-foreground]">Nenhum comando configurado</span>}
             </div>
           </div>
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <p className="text-sm text-[--muted-foreground]">Integração Organizze</p>
             <p className="text-[--foreground]">
               {workspace.organizzeConfig?.hasApiKey ? (
@@ -407,7 +407,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
                 </span>
               )}
             </p>
-          </div>
+          </div> */}
         </div>
       </BFCard>
 
@@ -686,7 +686,7 @@ export const WorkspaceDetail: React.FC<WorkspaceDetailProps> = ({ workspaceId: p
           <Tabs defaultValue="organizze" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="general">Geral</TabsTrigger>
-              <TabsTrigger value="organizze">Integração Organizze</TabsTrigger>
+              {/* <TabsTrigger value="organizze">Integração Organizze</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="general" className="space-y-4">

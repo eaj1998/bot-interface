@@ -185,7 +185,9 @@ export const AdminFinance: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching financial data:', error);
-            toast.error('Erro ao carregar dados financeiros');
+            if (!(error as any)._isPlanRestriction) {
+                toast.error('Erro ao carregar dados financeiros');
+            }
         } finally {
             setLoading(false);
         }

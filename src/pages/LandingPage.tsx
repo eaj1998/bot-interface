@@ -66,7 +66,15 @@ const painPoints = [
 const faqs = [
 	{
 		question: 'Funciona em qualquer grupo de WhatsApp?',
-		answer: 'Sim. Basta adicionar o bot no grupo da sua pelada e começar a usar.',
+		answer: 'Sim. Basta adicionar o bot no grupo da sua pelada e começar a usar. Leva menos de 5 minutos.',
+	},
+	{
+		question: 'O que acontece depois dos 30 dias de teste?',
+		answer: 'Você escolhe um plano e continua. Se não quiser continuar, o bot simplesmente para de responder — sem cobrança automática, sem cartão cadastrado.',
+	},
+	{
+		question: 'Meus jogadores precisam fazer alguma coisa?',
+		answer: 'Só digitar o comando no grupo. /bora pra entrar, /desistir pra sair. Não precisa instalar nada.',
 	},
 	{
 		question: 'Precisa instalar aplicativo?',
@@ -74,15 +82,11 @@ const faqs = [
 	},
 	{
 		question: 'Posso cancelar quando quiser?',
-		answer: 'Sim. Sem fidelidade.',
-	},
-	{
-		question: 'Tem teste grátis mesmo?',
-		answer: 'Sim. São 14 dias grátis, sem cartão.',
+		answer: 'Sim. Sem fidelidade, sem multa. Cancela em 1 clique.',
 	},
 	{
 		question: 'É seguro?',
-		answer: 'Sim. O bot organiza confirmações e informações da pelada de forma controlada.',
+		answer: 'Sim. O bot só acessa os comandos que você ativa. Não lê outras mensagens do grupo.',
 	},
 ];
 
@@ -223,7 +227,7 @@ export const LandingPage = () => {
 									to="/criar-conta"
 									className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-3 text-base font-semibold text-[var(--primary-foreground)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_36px_rgba(0,214,111,0.42)] sm:min-w-11 sm:w-auto sm:px-7"
 								>
-									Quero testar grátis por 14 dias
+									Quero testar grátis por 30 dias
 									<ArrowRight className="h-4 w-4" aria-hidden="true" />
 								</Link>
 								<a
@@ -334,6 +338,16 @@ export const LandingPage = () => {
 								</article>
 							))}
 						</div>
+						<div className="mt-8 flex items-center gap-4">
+							<Link
+								to="/criar-conta"
+								className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(163,255,18,0.38)]"
+							>
+								Resolver isso agora — grátis
+								<ArrowRight className="h-4 w-4" aria-hidden="true" />
+							</Link>
+							<p className="text-sm text-[var(--muted-foreground)]">30 dias grátis · Sem cartão</p>
+						</div>
 					</section>
 
 					<section id="como-funciona" className="mt-20 scroll-mt-24">
@@ -377,38 +391,63 @@ export const LandingPage = () => {
 
 					<section id="prints" className="mt-16 scroll-mt-24">
 						<div className="max-w-3xl">
-							<h2 className="text-2xl font-semibold leading-tight sm:text-3xl">Demonstração real do dia a dia</h2>
+							<h2 className="text-2xl font-semibold leading-tight sm:text-3xl">Como fica no dia a dia</h2>
 							<p className="mt-3 text-base leading-relaxed text-[var(--muted-foreground)] sm:text-lg">
-								Prints reais do uso no WhatsApp e no painel.
+								Tudo acontece dentro do WhatsApp. Nenhum app novo pra instalar.
 							</p>
 						</div>
 
 						<div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-[0_10px_24px_rgba(10,22,40,0.08)]">
-								<img
-									src="/screenshots/whatsapp-bot.svg"
-									alt="Print do WhatsApp com comando /bora para entrar na lista"
-									className="w-full rounded-xl border border-[var(--border)]"
-								/>
-								<p className="mt-3 text-sm font-semibold">/bora no WhatsApp</p>
+							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+								<p className="text-xs font-semibold uppercase tracking-wide text-[var(--secondary)]">Confirmação de presença</p>
+								<div className="mt-3 space-y-2">
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/bora</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Rafael entrou na lista. (8/16) ✅</p>
+									</div>
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/convidado João</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ João (convidado) entrou. (9/16) 👤</p>
+									</div>
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/lista</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Lista completa com confirmados e reserva</p>
+									</div>
+								</div>
 							</article>
 
-							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-[0_10px_24px_rgba(10,22,40,0.08)]">
-								<img
-									src="/screenshots/game-detail.svg"
-									alt="Print da lista do jogo com confirmados e reservas"
-									className="w-full rounded-xl border border-[var(--border)]"
-								/>
-								<p className="mt-3 text-sm font-semibold">Lista em tempo real</p>
+							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+								<p className="text-xs font-semibold uppercase tracking-wide text-[var(--secondary)]">Controle de pagamento</p>
+								<div className="mt-3 space-y-2">
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/pago</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Rafael marcado como pago ✅</p>
+									</div>
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/debitos</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Lista quem ainda não pagou</p>
+									</div>
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/saldo</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Receita total do grupo: R$ 1.280</p>
+									</div>
+								</div>
 							</article>
 
-							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-[0_10px_24px_rgba(10,22,40,0.08)]">
-								<img
-									src="/screenshots/painel-financeiro.svg"
-									alt="Print do painel financeiro com receita e pendências"
-									className="w-full rounded-xl border border-[var(--border)]"
-								/>
-								<p className="mt-3 text-sm font-semibold">Financeiro sem dor de cabeça</p>
+							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+								<p className="text-xs font-semibold uppercase tracking-wide text-[var(--secondary)]">Sorteio de times</p>
+								<div className="mt-3 space-y-2">
+									<div className="rounded-xl bg-[var(--accent)] p-3 text-sm">
+										<p className="font-mono font-semibold text-[var(--foreground)]">/times</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">→ Times sorteados por rating ⚽</p>
+									</div>
+									<div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm">
+										<p className="font-semibold text-[var(--foreground)]">🟢 Time 1</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">Rafael, Diego, Marcelo, Lucas, André</p>
+										<p className="mt-2 font-semibold text-[var(--foreground)]">🔵 Time 2</p>
+										<p className="mt-1 text-[var(--muted-foreground)]">João, Pedro, Carlos, Felipe, Bruno</p>
+									</div>
+								</div>
 							</article>
 						</div>
 					</section>
@@ -432,23 +471,15 @@ export const LandingPage = () => {
 
 							<article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 backdrop-blur-md">
 								<p className="text-base leading-relaxed text-[var(--foreground)]">
-									“Por R$24,90, eu comprei paz. Vale cada centavo para quem organiza.”
+									“Por R$49, eu comprei paz. Vale cada centavo para quem organiza.”
 								</p>
 								<p className="mt-4 text-sm font-medium text-[var(--muted-foreground)]">Marcelo, admin de grupo</p>
 							</article>
 						</div>
 
-						<div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+						<div className="mt-6 grid grid-cols-2 gap-3 max-w-sm mx-auto">
 							<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 text-center">
-								<p className="text-2xl font-bold text-[var(--primary)]">100+</p>
-								<p className="mt-1 text-sm text-[var(--muted-foreground)]">peladas organizadas</p>
-							</div>
-							<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 text-center">
-								<p className="text-2xl font-bold text-[var(--primary)]">500+</p>
-								<p className="mt-1 text-sm text-[var(--muted-foreground)]">jogadores gerenciados</p>
-							</div>
-							<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 text-center">
-								<p className="text-2xl font-bold text-[var(--primary)]">14 dias</p>
+								<p className="text-2xl font-bold text-[var(--primary)]">30 dias</p>
 								<p className="mt-1 text-sm text-[var(--muted-foreground)]">teste sem cartão</p>
 							</div>
 							<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 text-center">
@@ -459,26 +490,86 @@ export const LandingPage = () => {
 					</section>
 
 					<section id="preco" className="mt-20 scroll-mt-24">
-						<div className="mx-auto max-w-3xl rounded-3xl border border-[var(--primary)] bg-[var(--card)] p-8 text-center shadow-[0_16px_36px_rgba(10,22,40,0.14)] sm:p-10">
-							<span className="inline-flex rounded-full bg-[var(--primary)] px-4 py-1 text-xs font-semibold text-[var(--primary-foreground)]">
-								Plano simples
-							</span>
-							<h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">R$24,90/mês</h2>
-							<p className="mt-3 text-base text-[var(--muted-foreground)]">Em um grupo com 30 jogadores, dá menos de R$1 por pessoa.</p>
-							<p className="mt-2 text-sm font-semibold text-[var(--foreground)]">R$0,83 por jogador/mês para tirar a pelada do caos.</p>
-							<div className="mt-6 space-y-2 text-sm text-[var(--muted-foreground)]">
-								<p>✅ 14 dias grátis</p>
-								<p>✅ Sem cartão</p>
-								<p>✅ Sem fidelidade</p>
-							</div>
-							<Link
-								to="/criar-conta"
-								className="mx-auto mt-8 inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-8 py-3 text-base font-semibold text-[var(--primary-foreground)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(0,214,111,0.4)]"
-							>
-								Começar teste grátis agora
-								<ArrowRight className="h-4 w-4" aria-hidden="true" />
-							</Link>
+						<div className="text-center">
+							<h2 className="text-3xl font-semibold leading-tight sm:text-4xl">Preço simples. Sem surpresa.</h2>
+							<p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-[var(--muted-foreground)]">
+								30 dias grátis sem cartão. Depois, menos que uma pizza por mês.
+							</p>
 						</div>
+
+						<div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+							<article className="flex flex-col rounded-3xl border border-[var(--border)] bg-[var(--card)] p-7">
+								<p className="text-sm font-semibold text-[var(--muted-foreground)]">Grátis</p>
+								<div className="mt-3 flex items-end gap-1">
+									<span className="text-4xl font-bold">R$ 0</span>
+									<span className="mb-1 text-sm text-[var(--muted-foreground)]">/ 30 dias</span>
+								</div>
+								<p className="mt-1 text-sm text-[var(--muted-foreground)]">Sem cartão. Começa agora.</p>
+								<ul className="mt-6 flex-1 space-y-2 text-sm text-[var(--muted-foreground)]">
+									{['1 workspace', 'Até 20 jogadores', 'Todos os comandos do bot', 'Gestão de jogos e lista', 'Dashboard básico'].map((f) => (
+										<li key={f} className="flex items-center gap-2">
+											<CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+											{f}
+										</li>
+									))}
+								</ul>
+								<Link to="/criar-conta" className="mt-8 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--primary)] hover:text-[var(--primary)]">
+									Começar grátis
+									<ArrowRight className="h-4 w-4" aria-hidden="true" />
+								</Link>
+							</article>
+
+							<article className="relative flex flex-col rounded-3xl border-2 border-[var(--primary)] bg-[var(--card)] p-7 shadow-[0_0_40px_rgba(163,255,18,0.12)]">
+								<div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--primary)] px-4 py-1 text-xs font-bold text-[var(--primary-foreground)]">
+									Mais popular
+								</div>
+								<p className="text-sm font-semibold text-[var(--primary)]">Básico</p>
+								<div className="mt-3 flex items-end gap-1">
+									<span className="text-4xl font-bold">R$ 49</span>
+									<span className="mb-1 text-sm text-[var(--muted-foreground)]">/ mês</span>
+								</div>
+								<p className="mt-1 text-sm text-[var(--muted-foreground)]">ou R$ 490/ano — 2 meses grátis</p>
+								<p className="mt-1 text-xs font-semibold text-[var(--primary)]">R$ 1,63 por jogador/mês (30 jogadores)</p>
+								<ul className="mt-6 flex-1 space-y-2 text-sm text-[var(--muted-foreground)]">
+									{['1 workspace', 'Jogadores ilimitados', 'Bot completo (todos os comandos)', 'Gestão financeira (mensalidades, PIX)', 'Dashboard + relatórios', 'Churrasco e eventos'].map((f) => (
+										<li key={f} className="flex items-center gap-2">
+											<CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+											{f}
+										</li>
+									))}
+								</ul>
+								<Link to="/criar-conta" className="mt-8 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(163,255,18,0.38)]">
+									Testar 30 dias grátis
+									<ArrowRight className="h-4 w-4" aria-hidden="true" />
+								</Link>
+							</article>
+
+							<article className="flex flex-col rounded-3xl border border-[var(--border)] bg-[var(--card)] p-7">
+								<p className="text-sm font-semibold text-[var(--secondary)]">Pro</p>
+								<div className="mt-3 flex items-end gap-1">
+									<span className="text-4xl font-bold">R$ 97</span>
+									<span className="mb-1 text-sm text-[var(--muted-foreground)]">/ mês</span>
+								</div>
+								<p className="mt-1 text-sm text-[var(--muted-foreground)]">ou R$ 970/ano — 2 meses grátis</p>
+								<p className="mt-1 text-xs font-semibold text-[var(--secondary)]">Para quem gerencia mais de 1 grupo</p>
+								<ul className="mt-6 flex-1 space-y-2 text-sm text-[var(--muted-foreground)]">
+									{['Até 3 workspaces', 'Tudo do Básico', 'Ratings e avaliações de jogadores', 'Relatórios avançados', 'Suporte prioritário via WhatsApp'].map((f) => (
+										<li key={f} className="flex items-center gap-2">
+											<CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--secondary)]" />
+											{f}
+										</li>
+									))}
+								</ul>
+								<Link to="/criar-conta" className="mt-8 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--secondary)] hover:text-[var(--secondary)]">
+									Começar grátis
+									<ArrowRight className="h-4 w-4" aria-hidden="true" />
+								</Link>
+							</article>
+						</div>
+
+						<p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
+							Todos os planos começam com 30 dias grátis · Sem cartão · Cancele quando quiser
+						</p>
 					</section>
 
 					<section className="mt-20">
@@ -502,7 +593,7 @@ export const LandingPage = () => {
 							to="/criar-conta"
 							className="mx-auto mt-8 inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-8 py-3 text-base font-semibold text-[var(--primary-foreground)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(0,214,111,0.4)]"
 						>
-							Testar grátis por 14 dias
+							Testar grátis por 30 dias
 							<ArrowRight className="h-4 w-4" aria-hidden="true" />
 						</Link>
 					</section>

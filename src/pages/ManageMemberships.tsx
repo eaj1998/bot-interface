@@ -144,7 +144,9 @@ const ManageMemberships = () => {
             setMemberships(response.memberships);
             setSummary(response.summary);
         } catch (error: any) {
-            toast.error('Erro ao carregar memberships: ' + (error.response?.data?.message || error.message));
+            if (!(error as any)._isPlanRestriction) {
+                toast.error('Erro ao carregar memberships: ' + (error.response?.data?.message || error.message));
+            }
         } finally {
             setLoading(false);
         }
@@ -902,7 +904,7 @@ const ManageMemberships = () => {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setSuspendDialogOpen(false)} disabled={actionLoading}>
+                        <Button variant="secondary" onClick={() => setSuspendDialogOpen(false)} disabled={actionLoading}>
                             Cancelar
                         </Button>
                         <Button variant="destructive" onClick={handleSuspendSubmit} disabled={actionLoading}>
